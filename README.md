@@ -155,8 +155,7 @@ before enabling it.
 **Luna Reserve has been removed.** Legacy `enableReserveFallback` settings are ignored; no
 Reserve negotiation or automatic model switching remains. Select an ordinary model explicitly
 for an old `gpt-reserve` conversation. If the Host cannot change that conversation's model,
-preserve it and start a new conversation with the model you choose. Old return files are not
-read, migrated, or deleted. Account quota UI and the read-only quota tool retain ordinary
+preserve it and start a new conversation with the model you choose. Old return files are not read, migrated or deleted. Account quota UI and the read-only quota tool retain ordinary
 60-second caching and failure cooldowns, with no background polling. See
 [migration guidance](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#luna-reserve-fallback).
 

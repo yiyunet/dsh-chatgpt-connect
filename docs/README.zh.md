@@ -164,6 +164,8 @@ Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改与新�
 
 本节全部内容描述的是**上游**以旧包名发布的版本。包名、版本号、tag 状态与宿主数量均为上游当时的记录，**刻意保持原样不改写**；它们不代表本分支，也不含本分支的改动。安装本分支请使用上文「快速开始」中的命令。
 
+上游曾用 `dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12` 安装。那是**另一个 npm 包**，由上游以旧包名发布，不含本分支的任何改动。
+
 **已发布 Alpha 12：** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) 在下述仅恢复限制下适配精确的 stock DSH `0.2.2-alpha.3`，退役 Luna Reserve，并修复自带 Auto review preset 的 Codex Responses temperature 参数错误。发布渠道为 `alpha`，`latest` 保持 Alpha 10。参见[发行与迁移说明](release-notes/0.2.0-alpha.12.md)。这不要求升级 DSH。
 
 在精确的 DSH `0.2.2-alpha.3` 上，旧 Task 仅保留状态查看、停止和转手动。自动路由、续跑和证据子任务创建均被拒绝，包括内部直接入口。原有停用委派／归档安全退出仍保留 owner、回执和清理校验。原十四个 Host 的行为不变，所有版本的 Task 公共激活入口继续关闭。
@@ -195,7 +197,7 @@ Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改与新�
 
 历史发布 [`0.2.0-alpha.2`](release-notes/0.2.0-alpha.2.md) 已发布精确 DSH `0.2.1-alpha.1` 的兼容适配，以及跨模型路由的图片选择句柄修复。较早的 `0.2.0-alpha.1` 安装包保持不变，仍拒绝该宿主。原有受支持宿主无需升级。
 
-截至 2026-11-04，上游的 npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`，因此默认安装仍选择 Alpha 10；会移动的 npm tag 不保证其他宿主版本的兼容性。
+截至 2026-11-04，npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`，因此默认安装仍选择 Alpha 10；会移动的 npm tag 不保证其他宿主版本的兼容性。这是上游的包与上游的标签状态，本分支的 `alpha` 是 `0.3.1-alpha.1`。
 
 历史发布 [`0.2.0-alpha.1`](release-notes/0.2.0-alpha.1.md) 通过模型目录补充增加 `gpt-6.1-sol`，并开始较短的独立插件编号。四个受支持的 DSH 版本不变，无需升级宿主。
 

@@ -296,6 +296,11 @@ name. Package names, version numbers, tag states, and Host counts are upstream's
 the time they were written and are intentionally not rewritten; they do not describe this fork
 and do not contain this fork's changes. Use the quick start above to install this fork.
 
+Historical upstream installs used
+`dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12`. That is a **different npm
+artifact**, published by upstream under the previous package name; it is not this fork and does
+not contain any of this fork's changes.
+
 **Published Alpha 12:** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) adds exact stock DSH `0.2.2-alpha.3` with the recovery-only restriction below, retires Luna Reserve and fixes the stock Auto review preset's unsupported Codex Responses temperature. It is published on `alpha`; `latest` remains Alpha 10. See the [release and migration notes](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.12.md). This does not request a DSH upgrade.
 
 On exact DSH `0.2.2-alpha.3`, saved Task records are recovery-only: inspect state, stop or take over manually. Automatic routing, resume and evidence-child creation are rejected, including internal direct entry points. Existing safe-disable/archive exits retain their owner, receipt and cleanup checks. The prior fourteen Hosts keep their behavior; Task's public activation gate remains closed everywhere.
@@ -327,7 +332,7 @@ Historical release [`0.2.0-alpha.3`](https://github.com/yiyunet/dsh-chatgpt-conn
 
 Historical release [`0.2.0-alpha.2`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.2.md) publishes exact DSH `0.2.1-alpha.1` compatibility and the cross-route image selection handle repair. The earlier `0.2.0-alpha.1` artifact remains unchanged and rejects that host. Existing supported hosts do not require an upgrade.
 
-As of 2026-11-04, upstream's npm `alpha` pointed to `0.2.0-alpha.12`, while `latest` remained `0.2.0-alpha.10`. Default installation therefore selected Alpha 10. A moving npm tag is not a compatibility guarantee for other hosts.
+As of 2026-11-04, npm `alpha` points to `0.2.0-alpha.12`, while `latest` remains `0.2.0-alpha.10`. Those are upstream's package and upstream's dist-tags, not this fork's; this fork's `alpha` carries `0.3.1-alpha.1`. Default installation of the upstream package therefore selected Alpha 10, and a moving npm tag is not a compatibility guarantee for other hosts.
 
 Historical release [`0.2.0-alpha.1`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.1.md) adds `gpt-6.1-sol` through a model-catalog fallback and begins the shorter independent plugin numbering. The four supported DSH versions are unchanged; no host upgrade is required.
 

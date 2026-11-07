@@ -17,6 +17,14 @@ Everything that identifies the **published artifact** uses the new name: `packag
 
 Existing profiles therefore keep working across the fork boundary without renaming data or re-authorizing. Renaming any row above later is a data-migration project, not a string edit.
 
+## The first fork release has no already-published pair
+
+`0.3.1-alpha.1`, published 2026-11-07, is the first version this fork puts on the registry. Unlike every later release it has no earlier published fork version to fall back to, and no previously confirmed pairing for the README to keep recommending while a candidate is prepared. Its `verified-compatibility.json` entry was recorded from checks that ran before publication on the exact commit that was published (`e0655b0`), and the published tarball carries a SLSA provenance attestation naming that commit.
+
+The npm manifest for this version has no `gitHead` field, because the workflow publishes a prebuilt tarball rather than a git checkout. Treat the provenance attestation, not `gitHead`, as the published-artifact-to-commit link. `npm view dsh-chatgpt-connect@0.3.1-alpha.1 gitHead` returning nothing is expected and is not evidence of a bad publish.
+
+`dsh-chatgpt-connect@0.0.0` on npm is a name reservation only: a single file, no plugin code, and not a usable version. It exists because Trusted Publishing cannot be configured before the package name exists.
+
 ## Alpha 12: Reserve retirement and alpha.3 recovery
 
 Alpha 12 is published on the existing alpha channel. Its [bilingual release notes](docs/release-notes/0.2.0-alpha.12.md) describe the migration and verification limits. Legacy `enableReserveFallback` settings become inert on every Host. A saved `gpt-reserve` selection returns `MODEL_RETIRED` before account access or network activity: explicitly select an ordinary model, or preserve the old conversation and start another if the Host cannot replace its selection. No replacement model/account is guessed; old return files, sessions and OAuth credentials are not read for migration or deleted. Shared ordinary quota/account safety remains.

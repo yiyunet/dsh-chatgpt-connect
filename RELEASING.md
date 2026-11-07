@@ -10,7 +10,45 @@ Numbering, compatibility evidence, and channel policy are defined in
 [VERSIONING.md](VERSIONING.md). The approved independent numbering migration
 starts at `0.2.0-alpha.1`; later releases use `0.2.0-alpha.N`. It preserves the
 four declared DSH targets, Alpha-only gates, and separate `latest` policy.
-It is not a Beta/stable promotion or a requirement to upgrade DSH.
+It is not a Beta/stable promotion or a requirement to upgrade DSH. The first
+release published from this fork is `0.3.1-alpha.1` on 2026-11-07; the
+`0.2.0-alpha.N` sequence above records the upstream-numbering migration and does
+not describe this fork's own release sequence.
+
+## First publication (bootstrap order)
+
+Trusted Publishing cannot be configured for a package that does not exist yet:
+npm requires the package name to be on the registry before the Trusted Publisher
+settings accept a GitHub Actions entry. The first publication therefore breaks
+that circle once, in this order:
+
+1. Publish a name-reservation placeholder through a short-lived interactive
+   login. `dsh-chatgpt-connect@0.0.0` is that placeholder; its description
+   points readers at the real package. It carries no plugin code and is never a
+   release.
+2. Register the Trusted Publisher for `release.yml`, this repository, and the
+   `npm-release` environment, and confirm the entry lists the `publish`
+   permission. Without that permission the relationship exists but publishing
+   still fails.
+3. Only then dispatch the release workflow. Every later version is published by
+   that workflow alone.
+
+Step 1 has two accepted, permanent consequences. `latest` keeps pointing at the
+placeholder, because this workflow never promotes `latest`; and the placeholder
+stays on the registry, because a published version cannot be withdrawn once the
+short unpublish window has passed. Every documented installation command pins an
+exact version, which is what keeps both consequences harmless.
+
+## Building `lib/` for a release
+
+`lib/` is committed and must match the artifact CI verifies. Build it on Linux:
+run the `rebuild-lib.yml` workflow, download the `lib-linux` artifact, and copy
+its files over `lib/`. Building the same sources on Windows produces different
+bytes, because bundled dependencies resolve differently, and the `Verify
+committed build output` CI step then fails on the Linux runner even though a
+local rebuild looks clean. After committing a Linux build, do not run
+`pnpm run build` or `pnpm run check` locally on Windows: either one overwrites
+`lib/` with the Windows build and breaks the committed-output check again.
 
 ## Before triggering the workflow
 
@@ -62,8 +100,8 @@ commits, or notes.
 
 ```sh
 npm login --auth-type=web
-npm dist-tag add dsh-codex-connect@<version> latest
-npm view dsh-codex-connect dist-tags.latest
+npm dist-tag add dsh-chatgpt-connect@<version> latest
+npm view dsh-chatgpt-connect dist-tags.latest
 npm logout
 ```
 

@@ -40,8 +40,10 @@ try {
   const env = scrubCanaryEnvironment(process.env)
   delete env.NODE_OPTIONS
   delete env.NODE_PATH
+  // 包名必须与上面建立目录时用的 packageJson.name 同源：写死旧包名会让这条检查
+  // 在改名后永远失败（Cannot find package），验证链断掉却看不出原因。
   const result = await runBoundedCommand(process.execPath,
-    ['--input-type=module', '--eval', "await import('dsh-codex-connect'); console.log('imported')"],
+    ['--input-type=module', '--eval', `await import(${JSON.stringify(packageJson.name)}); console.log('imported')`],
     { cwd: fixture, env, timeoutMs: 15_000, maxBuffer: 8192 })
   if (result.error || result.cleanupError || result.status !== 0 || result.stdout.trim() !== 'imported') {
     const missing = result.stderr.match(/Cannot find package '([^'\r\n]+)'/u)?.[1]

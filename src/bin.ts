@@ -87,15 +87,15 @@ async function answerPrompt(
 /** Print the standalone command help. */
 function printHelp(): void {
   process.stdout.write([
-    'Usage: dsh-codex-connect <doctor|login|logout|status> [--device-code|--json]',
-    '       dsh-codex-connect doctor [--install-anchor <absolute-dsh-package.json>] [--json]',
-    '       dsh-codex-connect migrate-history [--apply --confirm-stopped] [--root <path>] [--json]',
-    '       dsh-codex-connect trust-origin <origin>',
-    '       dsh-codex-connect trusted-origins [--json]',
-    '       dsh-codex-connect untrust-origin <origin>',
-    '       dsh-codex-connect capabilities [--model <catalog-id>] [--probe] [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]',
-    '       dsh-codex-connect auto-review-probe [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]',
-    '       dsh-codex-connect metrics --file <journal.jsonl> [--file <journal.jsonl>] [--session <DSH-session-id>] [--json]',
+    'Usage: dsh-chatgpt-connect <doctor|login|logout|status> [--device-code|--json]',
+    '       dsh-chatgpt-connect doctor [--install-anchor <absolute-dsh-package.json>] [--json]',
+    '       dsh-chatgpt-connect migrate-history [--apply --confirm-stopped] [--root <path>] [--json]',
+    '       dsh-chatgpt-connect trust-origin <origin>',
+    '       dsh-chatgpt-connect trusted-origins [--json]',
+    '       dsh-chatgpt-connect untrust-origin <origin>',
+    '       dsh-chatgpt-connect capabilities [--model <catalog-id>] [--probe] [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]',
+    '       dsh-chatgpt-connect auto-review-probe [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]',
+    '       dsh-chatgpt-connect metrics --file <journal.jsonl> [--file <journal.jsonl>] [--session <DSH-session-id>] [--json]',
     '',
     '  doctor         inspect secret-free local package and OAuth file metadata, without observing a running Host',
     '  --install-anchor selects explicit DSH installation metadata; it does not prove that Host is running',
@@ -159,7 +159,7 @@ export async function run(argv: readonly string[]): Promise<number> {
   if (rawAction === 'metrics') return runRequestMetricsCommand(flags)
   const actions: readonly Action[] = ['doctor', 'login', 'logout', 'migrate-history', 'status', 'trust-origin', 'trusted-origins', 'untrust-origin']
   if (!actions.includes(rawAction as Action)) {
-    process.stderr.write(`dsh-codex-connect: expected doctor, login, logout, migrate-history, status, trust-origin, trusted-origins, or untrust-origin; got ${JSON.stringify(rawAction)}\n`)
+    process.stderr.write(`dsh-chatgpt-connect: expected doctor, login, logout, migrate-history, status, trust-origin, trusted-origins, or untrust-origin; got ${JSON.stringify(rawAction)}\n`)
     return 1
   }
   const action = rawAction as Action
@@ -215,7 +215,7 @@ export async function run(argv: readonly string[]): Promise<number> {
     || (jsonOutput && (action === 'login' || action === 'logout' || deviceCode))
     || (action === 'migrate-history' && (migrationConfirmStopped && !migrationApply || migrationApply && !migrationConfirmStopped))
     || ((action === 'trust-origin' || action === 'untrust-origin') && (originArgument === undefined || optionFlags.length !== 0))) {
-    process.stderr.write(`dsh-codex-connect: invalid options for ${action}\n`)
+    process.stderr.write(`dsh-chatgpt-connect: invalid options for ${action}\n`)
     return 1
   }
   try {
@@ -266,7 +266,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         if (jsonOutput) {
           printJson({
             schemaVersion: JSON_SCHEMA_VERSION,
-            package: 'dsh-codex-connect',
+            package: 'dsh-chatgpt-connect',
             version: CODEX_CONNECT_VERSION,
             status: status.authenticated ? 'signed-in' : 'signed-out',
           })
@@ -327,7 +327,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       }
     }
   } catch (error: unknown) {
-    process.stderr.write(`dsh-codex-connect: ${action} failed: ${safeMessage(error)}\n`)
+    process.stderr.write(`dsh-chatgpt-connect: ${action} failed: ${safeMessage(error)}\n`)
     return 1
   }
 }

@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { constants } from 'node:fs'
 import { open, readFile, writeFile, mkdtemp, rm, readdir, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { zstdDecompressSync } from 'node:zlib'
@@ -32,7 +32,13 @@ async function readLogin() {
   const handle = await open(authPath(), constants.O_RDONLY | constants.O_NOFOLLOW)
   try {
     const info = await handle.stat()
-    if (!info.isFile() || (info.mode & 0o077) !== 0 || info.uid !== process.getuid() || info.size > 512 * 1024) fail('CREDENTIAL_FILE_UNSAFE')
+    // POSIX（含 macOS/Linux）：mode 位 + uid 双重校验。Windows：两者皆无信号
+    // （mode 不含 POSIX 权限位；process.getuid 不存在，原式会抛 TypeError）。
+    // 故 Windows 只保留「常规文件 + 尺寸上限」，而 O_NOFOLLOW 仍挡住符号链接。刻意降级。
+    const unsafePermissions = process.platform === 'win32'
+      ? false
+      : (info.mode & 0o077) !== 0 || info.uid !== process.getuid()
+    if (!info.isFile() || unsafePermissions || info.size > 512 * 1024) fail('CREDENTIAL_FILE_UNSAFE')
     const bytes = await handle.readFile()
     if (bytes.length > 512 * 1024) fail('CREDENTIAL_FILE_UNSAFE')
     const doc = JSON.parse(bytes.toString('utf8'))
@@ -306,7 +312,18 @@ async function main() {
     if (LIVE && caseName !== 'oversized-user') await claimControlledRun(fileURLToPath(new URL('../.remember-acceptance-runs', import.meta.url)), runId, caseName)
     fingerprint = LIVE ? (await readLogin()).fingerprint : undefined
     root = await mkdtemp(join(tmpdir(), 'codex-native-durable-'))
-    if (((await stat(root)).mode & 0o077) !== 0) fail('TEMP_DIRECTORY_UNSAFE')
+    // 临时目录私有性判定。
+    // - POSIX（含 macOS/Linux）：mkdtemp 建 0700，用 mode 位确认 group/other 无权限，强度不变。
+    // - Windows：fs.stat().mode 不携带 POSIX 权限位（目录恒报 0o40777 一类），`mode & 0o077`
+    //   恒非零 ⇒ 该判定在 Windows 上永远失败，等于整条验收通道不可用。改用 Windows 上真实
+    //   存在的信号：临时目录必须是 os.tmpdir() 的**直接**子目录（%TEMP% 按用户目录 ACL 隔离）。
+    //   这是刻意的降级：弱于 POSIX mode 位，强于"什么都不查"；Windows 上不存在更强的 Node 可读信号。
+    // 分支条件是 `=== 'win32'` 而非"非 Linux"，因此 macOS 走原 POSIX 分支，行为逐字节不变。
+    if (process.platform === 'win32') {
+      if (dirname(resolve(root)) !== resolve(tmpdir())) fail('TEMP_DIRECTORY_UNSAFE')
+    } else if (((await stat(root)).mode & 0o077) !== 0) {
+      fail('TEMP_DIRECTORY_UNSAFE')
+    }
     // A fixed synthetic label guarantees the case-only fixture has letters; live targets stay random.
     await save(join(root, 'state.json'), { live: LIVE, caseName, fault, runId, runtime_versions: result.runtime_versions,
       label: caseName === 'assistant-origin' ? null : caseName === 'retained-user' ? `A${randomBytes(6).toString('hex').toUpperCase().slice(0, 11)}` : recallCase === undefined ? randomBytes(6).toString('hex').toUpperCase() : 'A1B2C3D4E5F6',

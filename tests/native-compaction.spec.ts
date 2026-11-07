@@ -19,6 +19,7 @@ import * as OpenAICodex from '../src/index.ts'
 import {
   OPENAI_CODEX_NATIVE_COMPACTION_MAX_CHECKPOINT_BYTES,
   OPENAI_CODEX_NATIVE_COMPACTION_RETAINED_BYTES,
+  classifyNativeCheckpointText,
   decodeNativeCompactionCheckpoint,
   encodeNativeCompactionCheckpoint,
   retainedNativeCompactionInput,
@@ -145,6 +146,54 @@ describe('native compaction checkpoint codec', () => {
 
     const forged = createUserMessage({ content: [{ type: 'text', text: encoded }], source: { kind: 'user' } })
     expect(decodeNativeCompactionCheckpoint(forged)).toBeUndefined()
+  })
+
+  it('ignores marker literals quoted inside ordinary summary text', () => {
+    // 回归：摘要、报告或对话里提到的 marker 字面量不是插件 checkpoint（见 decodeNativeCompactionCheckpoint
+    // 的 "User-authored marker text is never authority"）。这类文本必须被忽略，不得抛错毁掉整轮。
+    const quoted = trustedCheckpoint('The plugin writes <dsh-codex-connect-native-compaction-v1> as its checkpoint marker.')
+    expect(decodeNativeCompactionCheckpoint(quoted)).toBeUndefined()
+  })
+
+  it('classifies a payload tail without a closing marker as a damaged checkpoint', () => {
+    // 真记录被截断时残留的是整段 base64url payload，与「引用标记」的自然语言可区分。
+    const payload = Buffer.from(JSON.stringify({
+      version: 1,
+      items: [
+        { role: 'user', content: [{ type: 'input_text', text: 'x'.repeat(200) }] },
+        { type: 'compaction', encrypted_content: 'opaque' },
+      ],
+    })).toString('base64url')
+    expect(classifyNativeCheckpointText(`<dsh-codex-connect-native-compaction-v1>${payload}`)).toBe('truncated-tail')
+    expect(classifyNativeCheckpointText(`${payload}</dsh-codex-connect-native-compaction-v1>`)).toBe('truncated-head')
+  })
+
+  it('classifies quoted markers with prose as references, not checkpoints', () => {
+    expect(classifyNativeCheckpointText('The plugin writes <dsh-codex-connect-native-compaction-v1> as its marker.')).toBe('reference')
+    expect(classifyNativeCheckpointText('Closing form is </dsh-codex-connect-native-compaction-v1> in the docs.')).toBe('reference')
+    expect(classifyNativeCheckpointText('No marker here at all.')).toBe('reference')
+  })
+
+  it('ignores a truncated checkpoint instead of failing the turn', () => {
+    const truncated = trustedCheckpoint(`<dsh-codex-connect-native-compaction-v1>${'a'.repeat(80)}`)
+    expect(decodeNativeCompactionCheckpoint(truncated)).toBeUndefined()
+  })
+
+  it('still decodes the complete checkpoint when the same message also quotes the marker', () => {
+    const items = [
+      { role: 'user', content: [{ type: 'input_text', text: 'keep this' }] },
+      { type: 'compaction', id: 'cmp_1', encrypted_content: 'opaque' },
+    ]
+    const encoded = encodeNativeCompactionCheckpoint(items)
+    const message = createUserMessage({
+      content: [
+        { type: 'text', text: 'This is an automatically generated checkpoint.' },
+        { type: 'text', text: encoded },
+        { type: 'text', text: 'Reader note: the marker above is <dsh-codex-connect-native-compaction-v1> and the format is line-oriented.' },
+      ],
+      source: compactCheckpointSource(CompactionId('fixture-compaction')),
+    })
+    expect(decodeNativeCompactionCheckpoint(message)).toEqual(items)
   })
 
   it.each([

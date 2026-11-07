@@ -167,7 +167,7 @@ describe('OpenAI Codex Plugin configuration card', () => {
 
     render(<OpenAICodexSettings t={t} embedded />)
     expect(await screen.findByText(en.remoteOriginDescription)).toBeTruthy()
-    const command = `dsh plugin --profile web exec dsh-codex-connect trust-origin ${window.location.origin}`
+    const command = `dsh plugin --profile web exec dsh-chatgpt-connect trust-origin ${window.location.origin}`
     expect(screen.getByText(command)).toBeTruthy()
     expect(screen.queryByRole('button', { name: en.login })).toBeNull()
     expect(screen.queryByRole('button', { name: en.logout })).toBeNull()

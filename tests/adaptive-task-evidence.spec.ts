@@ -134,18 +134,25 @@ it('rejects known private-key paths and PEM payloads even under an ordinary text
   await writeFile(join(f.root, 'notes.txt'), '-----BEGIN RSA PRIVATE KEY-----\nsynthetic-placeholder')
   await expect(f.approve()).rejects.toThrow('TASK_EVIDENCE_FILE_DENIED')
 })
-it('artifacts reject symlink directories, hardlinks, public modes, traversal and oversize', async () => {
+it('artifacts reject symlink directories, hardlinks, traversal and oversize', async () => {
   const f = await setup(), path = join(f.root, 'artifacts'), store = new TaskDelegationArtifacts(path)
   await expect(store.get('../escape')).rejects.toThrow('TASK_ARTIFACT_INVALID')
   await expect(store.put('x'.repeat(2 * 1024 * 1024))).rejects.toThrow('TASK_ARTIFACT_TOO_LARGE')
   const digest = await store.put({ ok: true }), file = join(path, digest + '.json')
   await link(file, join(f.root, 'copy.json'))
   await expect(store.get(digest)).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
-  await rm(join(f.root, 'copy.json')); await chmod(file, 0o644)
-  await expect(store.get(digest)).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
-  await chmod(file, 0o600); await chmod(path, 0o755)
-  await expect(store.get(digest)).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
+  await rm(join(f.root, 'copy.json'))
   await symlink(path, join(f.root, 'alias'))
   await expect(new TaskDelegationArtifacts(join(f.root, 'alias')).put({ ok: true })).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
   expect(await readFile(file, 'utf8')).toBe('{"ok":true}')
+})
+// 「group/other 可读写」这一场景在 Windows 上构造不出来：chmod 只切只读位，模式位不变。
+// 因此按平台跳过，而不是放宽断言——POSIX 上仍逐条执行，产品一旦丢掉 mode 校验就会在这里失败。
+it.skipIf(process.platform === 'win32')('artifacts reject group/other-accessible files and directories', async () => {
+  const f = await setup(), path = join(f.root, 'artifacts'), store = new TaskDelegationArtifacts(path)
+  const digest = await store.put({ ok: true }), file = join(path, digest + '.json')
+  await chmod(file, 0o644)
+  await expect(store.get(digest)).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
+  await chmod(file, 0o600); await chmod(path, 0o755)
+  await expect(store.get(digest)).rejects.toThrow('TASK_ARTIFACT_UNSAFE')
 })

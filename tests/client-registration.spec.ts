@@ -13,11 +13,13 @@ describe('OpenAI Codex browser contribution', () => {
     expect(client.match(/new OpenAICodexAccountStore\(\)/g)).toHaveLength(1)
     expect(client).not.toContain("ctx.slots.inject('settings.models.provider-card'")
   })
-  it('registers a Plugin settings tab only while the Host serves Codex Connect settings', async () => {
+  it('registers the panel in the ANB tools shell only while the Host serves Codex Connect settings', async () => {
     const client = await readFile(new URL('../src/client/index.tsx', import.meta.url), 'utf8')
     expect(client).toContain('ctx.configForms.whileServed([OPENAI_CODEX_SETTINGS_NAMESPACE]')
-    expect(client).toContain("name: 'settings.plugins.tab'")
-    expect(client).toContain("id: 'codex-connect'")
+    // N29（老板 2026-10-30 令）：设置面板一律挂「ANB 工具」壳独占槽位，不得自注册 settings.section。
+    expect(client).toContain('name: SHELL_SLOT')
+    expect(client).toContain("id: 'chatgpt-connect'")
+    expect(client).toContain('guardShell(ctx)')
     expect(client).toContain("ctx.configForms.get<OpenAICodexSettingsConfig>(OPENAI_CODEX_SETTINGS_NAMESPACE)")
     expect(client).toContain('OPENAI_CODEX_SETTINGS_NAMESPACE')
     expect(client).not.toContain("namespace: 'web'")
@@ -68,7 +70,9 @@ describe('OpenAI Codex browser contribution', () => {
     ])
     expect(clientCard).toContain('<OpenAICodexSettings')
     expect(settings).toContain('aria-expanded={expanded}')
-    expect(locales.match(/title: 'Codex Connect'/gu)).toHaveLength(2)
+    // 中文语种选项卡显示「ChatGPT连接」，英文仍为「ChatGPT Connect」；两者各一处。
+    expect(locales.match(/title: 'ChatGPT Connect'/gu)).toHaveLength(1)
+    expect(locales.match(/title: 'ChatGPT连接'/gu)).toHaveLength(1)
     expect(adapter).toContain("displayName: 'OpenAI Codex'")
   })
 

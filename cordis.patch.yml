@@ -2,7 +2,7 @@
 # web-search route. Optional capabilities require explicit profile config.
 - insert:
     - id: llm-openai-codex
-      name: dsh-codex-connect
+      name: dsh-chatgpt-connect
       config:
         enableProxy: false
         enableSearch: false

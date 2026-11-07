@@ -49,8 +49,12 @@ async function readCodexLogin() {
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW)
   try {
     const stat = await handle.stat()
-    if (!stat.isFile() || (stat.mode & 0o077) !== 0
-      || (process.getuid !== undefined && stat.uid !== process.getuid()) || stat.size > 512 * 1024) stop('CODEX_LOGIN_FILE_UNSAFE')
+    // POSIX（含 macOS/Linux）：mode 位 + uid 双重校验。Windows：mode 无 POSIX 权限位、
+    // process.getuid 不存在，两者皆无信号，只保留「常规文件 + 尺寸上限」；O_NOFOLLOW 仍挡符号链接。
+    const unsafePermissions = process.platform === 'win32'
+      ? false
+      : (stat.mode & 0o077) !== 0 || (process.getuid !== undefined && stat.uid !== process.getuid())
+    if (!stat.isFile() || unsafePermissions || stat.size > 512 * 1024) stop('CODEX_LOGIN_FILE_UNSAFE')
     const bytes = await handle.readFile()
     if (bytes.byteLength > 512 * 1024) stop('CODEX_LOGIN_FILE_UNSAFE')
     return codexCredential(JSON.parse(bytes.toString('utf8')))

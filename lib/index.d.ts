@@ -1,7 +1,6 @@
 import z from "@deepseek-ai/schemastery";
 import { GenerateOptions, RetryPolicyConfig, StreamChunk } from "@deepseek-ai/dsh-llm";
 import { AuthInteraction, Credential, CredentialInfo, CredentialStore, OAuthCredential } from "@earendil-works/pi-ai";
-import "@deepseek-ai/dsh-timeout";
 import { Context, Service, Volatile } from "@deepseek-ai/cordis";
 import "@deepseek-ai/dsh-tools";
 import { WebSearchProvider, WebSearchRequest, WebSearchResult } from "@deepseek-ai/dsh-web";
@@ -427,20 +426,45 @@ export declare function parseOpenAICodexUsage(value: unknown): OpenAICodexUsage;
 export declare function readOpenAICodexRateLimits(store: Pick<OpenAICodexCredentialStore, 'captureActiveAccount'>): Promise<OpenAICodexUsage>;
 /** Stable Host tool name; no account/model selector or refresh bypass is accepted. */
 export declare const QUOTA_TOOL_NAME = "codex_connect_quota";
-/** Shared deterministic policy for Host and browser; no filesystem, process or runtime imports. */
+/**
+ * Shared deterministic policy for Host and browser; no filesystem, process or runtime imports.
+ *
+ * 自主维护分支的改造要点（双轨制，2026-11-06 老板裁决）：
+ * - 轨道一「准入」：`engines.dsh` 声明**有界区间**，区间内一律装得上。宿主门禁只读这一处，
+ *   因此 DSH 小版本更新不会再被拒载。
+ * - 轨道二「报告」：`evaluateCompatibility` 只把**维护者实测过的清单**
+ *   (`isVerifiedDshPluginApiVersion`) 判为 `compatible`；清单外一律 `unverified`，
+ *   绝不从「在区间内」推断「可用」。
+ * - 两条轨道刻意分离：门前放宽保证不被锁死，报告从严保证不谎报。
+ * - 该模块被浏览器侧共用，因此不 import semver，自带极简比较器。
+ */
 export declare const COMPATIBILITY_SCHEMA_VERSION: 1;
 export declare const SUPPORTED_NODE_RANGE = "^22.19.0 || >=24.0.0";
+/** 准入区间。宿主门禁与 peer 声明共用这一个字符串。 */
+export declare const SUPPORTED_DSH_PLUGIN_API_RANGE = ">=0.1.7-rc.1 <0.3.0";
+/** 基线版本，仅用于展示与诊断，**不是**安装白名单。 */
 export declare const SUPPORTED_DSH_PLUGIN_API_VERSION = "0.1.7-rc.1";
+/**
+ * 兼容别名，保留给仍按旧名导入的调用方。
+ * @deprecated 语义已从「允许的版本」变为「已实测的版本」，新代码请用 VERIFIED_DSH_PLUGIN_API_VERSIONS。
+ */
 export declare const SUPPORTED_DSH_PLUGIN_API_VERSIONS: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3"];
-export declare const SUPPORTED_DSH_PLUGIN_API_RANGE: string;
 export declare const SUPPORTED_PI_AI_RANGE = "0.85.1";
 export declare const PI_AI_PACKAGE = "@earendil-works/pi-ai";
-export declare const DSH_PLUGIN_API_PACKAGES: readonly ["@deepseek-ai/dsh-agent", "@deepseek-ai/dsh-atomic-write", "@deepseek-ai/dsh-attachment", "@deepseek-ai/dsh-client-ui-chat", "@deepseek-ai/dsh-client-ui-layout", "@deepseek-ai/dsh-client-ui-primitives", "@deepseek-ai/dsh-client-ui-tool", "@deepseek-ai/dsh-compaction", "@deepseek-ai/dsh-home-paths", "@deepseek-ai/dsh-host-webserver", "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-fs", "@deepseek-ai/dsh-session", "@deepseek-ai/dsh-settings", "@deepseek-ai/dsh-timeout", "@deepseek-ai/dsh-tools", "@deepseek-ai/dsh-util-values", "@deepseek-ai/dsh-web"];
+/**
+ * 契约声明的宿主包清单 = `package.json` 里**实际声明的全部 dsh-* peer**。
+ *
+ * 与旧版差别的理由：旧清单 19 项是「只要 import 过就登记」的历史账；本分支只对真正需要
+ * 与宿主共享单例的 8 个包声明 peer，清单因此收敛到这 8 个。清单必须与 peer 声明严格一致
+ * （`tests/compatibility.spec.ts` 逐条对账），多余项会让契约声称依赖一个并未声明的包。
+ */
+export declare const DSH_PLUGIN_API_PACKAGES: readonly ["@deepseek-ai/dsh-attachment", "@deepseek-ai/dsh-compaction", "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-session", "@deepseek-ai/dsh-tools", "@deepseek-ai/dsh-util-values", "@deepseek-ai/dsh-web"];
 export declare const COMPATIBILITY_PACKAGES: readonly ["@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-compaction", "@earendil-works/pi-ai"];
 type CompatibilityPackageName = (typeof COMPATIBILITY_PACKAGES)[number];
 /** Version metadata proves a declared match, not behavioral failure for an untested package. */
 type CompatibilityStatus = 'compatible' | 'unverified' | 'incompatible' | 'unknown';
 interface CompatibilityEntry {
+  /** 人类可读的约束描述：宿主包为下界区间，pi-ai 为精确版本。 */
   supported: string;
   installed: string | null;
   status: CompatibilityStatus;
@@ -466,7 +490,14 @@ interface CompatibilityEvaluationInput {
     packages?: Partial<Record<CompatibilityPackageName, string | null | undefined>>;
   };
 }
-/** Public contract data mirrored by compatibility.json without importing JSON at runtime. */
+/**
+ * Public contract data mirrored by compatibility.json without importing JSON at runtime.
+ *
+ * ⚠ 刻意与原版保持**形状完全一致**（version / versions / packages），不新增 minimum/range 字段。
+ * 原因：`scripts/check-compatibility.mjs` 会拿这份契约与仓库里的 `compatibility.json` 对账；
+ * 一旦改形状，`compatibility.json` 必须同步重写，而在无法本地跑校验的情况下等于盲改。
+ * 新语义只落在下面的判定函数里，不进入契约数据。
+ */
 export declare const COMPATIBILITY_CONTRACT: {
   readonly schemaVersion: 1;
   readonly engines: {
@@ -475,7 +506,7 @@ export declare const COMPATIBILITY_CONTRACT: {
   readonly dshPluginApi: {
     readonly version: "0.1.7-rc.1";
     readonly versions: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3"];
-    readonly packages: readonly ["@deepseek-ai/dsh-agent", "@deepseek-ai/dsh-atomic-write", "@deepseek-ai/dsh-attachment", "@deepseek-ai/dsh-client-ui-chat", "@deepseek-ai/dsh-client-ui-layout", "@deepseek-ai/dsh-client-ui-primitives", "@deepseek-ai/dsh-client-ui-tool", "@deepseek-ai/dsh-compaction", "@deepseek-ai/dsh-home-paths", "@deepseek-ai/dsh-host-webserver", "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-fs", "@deepseek-ai/dsh-session", "@deepseek-ai/dsh-settings", "@deepseek-ai/dsh-timeout", "@deepseek-ai/dsh-tools", "@deepseek-ai/dsh-util-values", "@deepseek-ai/dsh-web"];
+    readonly packages: readonly ["@deepseek-ai/dsh-attachment", "@deepseek-ai/dsh-compaction", "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-session", "@deepseek-ai/dsh-tools", "@deepseek-ai/dsh-util-values", "@deepseek-ai/dsh-web"];
   };
   readonly piAi: {
     readonly package: "@earendil-works/pi-ai";
@@ -827,6 +858,15 @@ interface UpdateCheckOptions {
   currentVersion: string;
   fetchImpl?: FetchImpl;
   timeoutMs?: number;
+  /**
+   * 注入缝：覆盖模块级 `OPENAI_CODEX_UPDATE_CHANNEL_ENABLED`。
+   *
+   * 存在理由：渠道开关的职责是「别在生产环境里偷偷发请求」，不是「删掉这块功能」。
+   * 若开关硬编码且不可覆盖，任何验证更新逻辑的测试都只能断言「通道已关闭」，
+   * 等于把整块能力从测试覆盖里摘掉。留这道缝，测试可显式声明「我自己控制传输」。
+   * 生产代码一律不传此参数，因此开关默认值始终生效。
+   */
+  channelEnabled?: boolean;
 }
 type FetchImpl = (input: string, init?: RequestInit) => Promise<Response>;
 /** Parse one exact package version, accepting the conventional leading `v`. */

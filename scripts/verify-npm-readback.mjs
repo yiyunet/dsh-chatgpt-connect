@@ -3,7 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { runBoundedCommand } from './bounded-command.mjs'
 import { isAlphaReleaseVersion } from './release-metadata.mjs'
 
-export const RELEASE_PACKAGE = 'dsh-codex-connect'
+export const RELEASE_PACKAGE = 'dsh-chatgpt-connect'
 export const NPM_READBACK_ATTEMPTS = 12
 const SAFE_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u
 const SAFE_ERROR_CODES = new Set(['E401', 'E403', 'E404', 'E429', 'E500', 'E502', 'E503', 'EAI_AGAIN', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ENOBUFS', 'ENOENT'])

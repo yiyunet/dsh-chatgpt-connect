@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto'
 import { openAICodexModelCatalog, OPENAI_CODEX_TRANSPORT } from './model-catalog.ts'
-import { evaluateCompatibility, DSH_PLUGIN_API_PACKAGES, readInstalledPackageVersion, isSupportedDshPluginApiVersion } from './compatibility.ts'
+import { evaluateCompatibility, DSH_RUNTIME_DIAGNOSTIC_PACKAGES, readInstalledPackageVersion, isSupportedDshPluginApiVersion } from './compatibility.ts'
 import { diagnoseOpenAICodex } from './doctor.ts'
 import { probeCodexResponses } from './capability-probe.ts'
 import type { ResponsesProbeEvidence, ResponsesProbeRequest } from './capability-probe.ts'
@@ -116,12 +116,12 @@ export class CodexCapabilityDiagnostics {
     const local = await this.deps.diagnose()
     const versions: Record<string, string | null> = { node: safeVersion(local.node) }
     for (const [name, entry] of Object.entries(local.compatibility.packages)) versions[name] = safeVersion(entry.installed)
-    for (const name of DSH_PLUGIN_API_PACKAGES) versions[name] = safeVersion(await this.deps.readVersion(name))
+    for (const name of DSH_RUNTIME_DIAGNOSTIC_PACKAGES) versions[name] = safeVersion(await this.deps.readVersion(name))
     const compatibility = evaluateCompatibility({ nodeVersion: versions['node'] ?? null, packageVersions: versions })
     const missing = Object.values(versions).some(value => value === null)
       || !/^v?\d+\.\d+\.\d+$/u.test(versions['node'] ?? '')
     const dshVersion = versions['@deepseek-ai/dsh-llm']
-    const mismatch = DSH_PLUGIN_API_PACKAGES.some(name => versions[name] !== null
+    const mismatch = DSH_RUNTIME_DIAGNOSTIC_PACKAGES.some(name => versions[name] !== null
       && (!isSupportedDshPluginApiVersion(versions[name]!) || versions[name] !== dshVersion))
       || compatibility.status === 'incompatible' || compatibility.status === 'unverified'
     const runtime = mismatch

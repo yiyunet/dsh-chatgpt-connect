@@ -13,6 +13,8 @@ const REQUIRED_NODE_RANGE = '^22.19.0 || >=24.0.0'
 const REQUIRED_DSH_VERSION = '0.1.7-rc.1'
 const REQUIRED_DSH_VERSIONS = [REQUIRED_DSH_VERSION, '0.1.7-rc.2', '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', '0.2.1-alpha.2', '0.2.1-alpha.3', '0.2.1-alpha.4', '0.2.1-alpha.5', '0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-alpha.3']
 const REQUIRED_DSH_RANGE = REQUIRED_DSH_VERSIONS.join(' || ')
+/** 双轨制：准入门改下有界区间（下界…0.3.0 开区间），新 Host 装得上；能否用由报告口径判定。 */
+const REQUIRED_DSH_PEER_RANGE = `>=${REQUIRED_DSH_VERSION} <0.3.0`
 const REQUIRED_PI_AI_RANGE = '0.85.1'
 const PI_AI_PACKAGE = '@earendil-works/pi-ai'
 const SCHEMASTERY_PACKAGE = '@deepseek-ai/schemastery'
@@ -107,8 +109,8 @@ async function main() {
 
   const peers = packageJson.peerDependencies ?? {}
   for (const [name, version] of Object.entries(peers)) {
-    if (name.startsWith('@deepseek-ai/dsh-') && version !== REQUIRED_DSH_RANGE) {
-      fail(`peer dependency ${name} must match ${REQUIRED_DSH_RANGE}`)
+    if (name.startsWith('@deepseek-ai/dsh-') && version !== REQUIRED_DSH_PEER_RANGE) {
+      fail(`peer dependency ${name} must declare the lower bound ${REQUIRED_DSH_PEER_RANGE}`)
     }
   }
   const dependencies = packageJson.dependencies ?? {}
@@ -119,10 +121,13 @@ async function main() {
   }
 
   const declaredPackages = compatibility.dshPluginApi.packages
+  // 下界制之后只保留少数真正需要与宿主共享单例的 dsh-* peer，
+  // 因此这里从「完全相等」改为「必须覆盖」：compatibility.json 的清单用于诊断对照，允许更宽。
   const mandatoryPeers = Object.keys(peers).filter(name => name.startsWith('@deepseek-ai/dsh-')
     && packageJson.peerDependenciesMeta?.[name]?.optional !== true).sort()
-  if (JSON.stringify([...declaredPackages].sort()) !== JSON.stringify(mandatoryPeers)) {
-    fail('compatibility API package list must cover every mandatory DSH peer exactly once')
+  const missingPeers = mandatoryPeers.filter(name => !declaredPackages.includes(name))
+  if (missingPeers.length > 0) {
+    fail(`compatibility API package list must cover every mandatory DSH peer: missing ${missingPeers.join(', ')}`)
   }
   const installedDeclared = Object.fromEntries(await Promise.all(declaredPackages.map(async name => [name, await installedPackageVersion(name)])))
   const installedDshVersion = installedDeclared['@deepseek-ai/dsh-llm']

@@ -53,7 +53,7 @@ export async function runAutoReviewProbeCommand(
   let timeoutMs = 30_000
   const seen = new Set<string>()
   const invalid = (): number => {
-    process.stderr.write('Usage: dsh-codex-connect auto-review-probe [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]\n')
+    process.stderr.write('Usage: dsh-chatgpt-connect auto-review-probe [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]\n')
     return 2
   }
   for (let index = 0; index < args.length; index += 1) {

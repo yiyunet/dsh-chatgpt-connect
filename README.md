@@ -1,10 +1,23 @@
-# Codex Connect
+# dsh-chatgpt-connect
+
+**This fork — version `0.3.1-alpha.1`, not yet published.** It is a self-maintained fork of [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect), which itself derives from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex). Everything below the heading **Historical upstream release** describes releases published under the previous package name `dsh-codex-connect`; those records are kept unchanged on purpose, so their package names and version numbers are intentionally not rewritten.
+
+What this fork changes relative to upstream:
+
+- **Admission and verification are separate decisions.** The package declares a bounded Host range (`>=0.1.7-rc.1 <0.3.0`), so a DSH update inside that range no longer refuses to load. A version is reported as `compatible` only when it is on the maintainer-verified list; any other version inside the range is reported as `unverified`, never asserted as working. Availability of a Host is decided by the declared range; trustworthiness is decided by the verified list.
+- **Package and CLI are both named `dsh-chatgpt-connect`.** The settings panel is titled "ChatGPT Connect"; when the interface language is Chinese the ANB 工具 tab reads 「ChatGPT连接」.
+- **The online update channel is disabled.** The panel reports that update information is unavailable. This is by design: no release or npm artifact exists yet, and the check makes no network request while disabled.
+- **Windows acceptance paths are usable.** The native-compaction acceptance scripts no longer apply POSIX-only permission and ownership checks on Windows; POSIX behaviour is unchanged.
+
+Historical upstream installs used `dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12`. That is a **different npm artifact**, published by upstream under the previous package name; it is not this fork and does not contain any of the changes listed above. Install this fork with the command in [Quick start](#quick-start).
+
+## Historical upstream release (previous package name)
 
 **Published Alpha 12:** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) adds exact stock DSH `0.2.2-alpha.3` with the recovery-only restriction below, retires Luna Reserve and fixes the stock Auto review preset's unsupported Codex Responses temperature. It is published on `alpha`; `latest` remains Alpha 10. See the [release and migration notes](docs/release-notes/0.2.0-alpha.12.md). This does not request a DSH upgrade.
 
 On exact DSH `0.2.2-alpha.3`, saved Task records are recovery-only: inspect state, stop or take over manually. Automatic routing, resume and evidence-child creation are rejected, including internal direct entry points. Existing safe-disable/archive exits retain their owner, receipt and cleanup checks. The prior fourteen Hosts keep their behavior; Task's public activation gate remains closed everywhere.
 
-[![npm version](https://img.shields.io/npm/v/dsh-codex-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-codex-connect)
+[![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 
 English | [中文](docs/README.zh.md)
 
@@ -22,7 +35,7 @@ Codex Connect adds the `openai-codex` model provider to the normal Harness agent
 
 This guide recommends Codex Connect `0.2.0-alpha.12` / DSH `0.2.1-rc.5`; the other exact supported hosts are listed below. Check `dsh --version` first and use `doctor --json` for local diagnostics; the CLI version alone does not prove which model-runtime packages are installed, and missing metadata is reported as unknown. For other versions, use [Installation and upgrades](INSTALL.md). A moving npm tag such as `alpha` is not a compatibility guarantee.
 
-| Requirement | Verified pairing |
+| Requirement | Historical upstream verified pairing |
 |---|---|
 | Codex Connect | `0.2.0-alpha.12` |
 | DeepSeek Harness | `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5` or `0.2.2-alpha.3` (consistent package set) |
@@ -56,7 +69,7 @@ Historically, on 2026-10-10 the maintainer reported successful login and normal 
 ### 1. Install
 
 ```sh
-dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.1
 dsh web
 ```
 
@@ -73,15 +86,14 @@ Never paste an authorization URL, code, token, or account identifier into an iss
 For a package-manager-free diagnostic, run the already installed bin directly (replace these independently identified paths):
 
 ```sh
-node /absolute/profile/node_modules/dsh-codex-connect/lib/bin.js doctor --json \
+node /absolute/profile/node_modules/dsh-chatgpt-connect/lib/bin.js doctor --json \
   --install-anchor /absolute/dsh/node_modules/@deepseek-ai/dsh/package.json
 ```
 
 `doctor --json` reports local installation metadata without a network request or raw credentials; an anchor does not prove that installation is running. Wrappers such as `dsh plugin exec` may reconcile dependencies. See [runtime identity and direct diagnostics](docs/runtime-identity.md), including Desktop/ASAR limitations. Development builds containing that change also distinguish page, Host-loaded and installed plugin versions in settings. A passing diagnostic is not proof of model access; an actual request requires separate authorization.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/franksong2702/dsh-codex-connect/main/docs/assets/en/hero.jpg" alt="Codex Connect — ChatGPT OAuth for DeepSeek Harness" width="100%">
-</p>
+<!-- 图片已移除：原地址指向上游仓库 franksong2702/dsh-codex-connect 的 docs/assets，本仓库没有这些文件，保留会裂图。
+     若后续补入 docs/assets/en/hero.jpg，在此处恢复 <p align="center"><img ...></p>。 -->
 
 ## Core capabilities
 
@@ -89,11 +101,10 @@ node /absolute/profile/node_modules/dsh-codex-connect/lib/bin.js doctor --json \
 - **Models and Astra support:** the currently verified DSH and plugin combination supports `gpt-6-astra`. The plugin supplies its missing model definition with Low, Medium, High, Xhigh, and Max reasoning levels; Default preserves the provider default. Saved Off/Minimal selections require an [explicit update](MIGRATION.md#astra-reasoning-selections). When the installed dependency catalog includes Astra, the plugin preserves its native metadata while retaining these five calibrated reasoning choices. A model appearing in the list does not mean the current account has permission to use it; overall compatibility with new dependency versions still requires separate verification.
 - **Fast Mode:** request priority service for one conversation, off by default. Optional, separate profile settings can enable it for newly started top-level or subagent conversations without changing existing conversations. Actual speed and quota consumption depend on the service; no fixed speed multiplier is guaranteed.
 - **Quota:** show the server-returned `5h` and `7d` windows and reset times, normally refreshed every 60 seconds while signed in and the tab is visible; failures back off. Missing windows are not invented; Spark uses its separate quota bucket.
-- **Plugin updates:** check for newer Codex Connect releases without installing anything or recommending changes to DSH. Host compatibility is available through explicit local diagnostics.
+- **Plugin updates:** the update check is **disabled in this fork**. It never contacts a registry and reports the information as unavailable; no DSH change is ever recommended.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/franksong2702/dsh-codex-connect/main/docs/assets/composer-capabilities.jpg" alt="Fast Mode and quota controls in the DeepSeek Harness Composer" width="820">
-</p>
+<!-- 图片已移除：原地址指向上游仓库的 docs/assets/composer-capabilities.jpg，本仓库没有该文件，保留会裂图。
+     若后续补入，在此处恢复 <p align="center"><img ...></p>。 -->
 
 ## Optional capabilities
 
@@ -179,7 +190,7 @@ pnpm run check:dsh-install
 
 ## License and acknowledgements
 
-Copyright 2026 Frank Song for Codex Connect modifications and additional work. This project contains software derived from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex); Copyright 2026 Yan-Zero is retained for upstream material. Both are distributed under Apache-2.0; see [NOTICE](NOTICE).
+Copyright 2026 Frank Song for the original Codex Connect work. Copyright 2026 yiyunet for this fork's modifications and additional work. This project contains software derived from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) and is forked from [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect); all upstream copyrights are retained. All are distributed under Apache-2.0; see [NOTICE](NOTICE).
 
 Published `0.2.0-alpha.1` adds `gpt-6.1-sol` to the manual model catalog and configuration selector. It exposes Low, Medium, High, Xhigh and Max; Default omits effort, and Ultra orchestration is unsupported. At that release, the Codex fallback was 272,000 tokens with an optional 872,000 local ceiling, not the API product window or proof of account access. See [metadata and validation](docs/agent-notes/gpt61-sol-support.md). No Adaptive Task grants are expanded.
 

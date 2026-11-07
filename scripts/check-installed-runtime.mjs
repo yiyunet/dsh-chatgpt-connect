@@ -71,7 +71,7 @@ export async function checkInstalledRuntime(profilePackagePath, hostPackagePath 
     const [{ default: LlmRuntime }, PiAiRuntime, OpenAICodex] = await Promise.all([
       importHost('@deepseek-ai/dsh-llm'),
       importHost('@deepseek-ai/dsh-llm-pi-ai'),
-      importProfile('dsh-codex-connect'),
+      importProfile('dsh-chatgpt-connect'),
     ])
     await ctx.plugin(LlmRuntime)
     await ctx.plugin(PiAiRuntime, {})

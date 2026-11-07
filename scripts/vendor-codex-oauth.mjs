@@ -3,13 +3,16 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 // Reproduce the pinned OAuth copy and its local patches without modifying host dependencies.
+// 换行统一为 LF：上游 npm 包是 LF，而 Windows 检出会把手写 vendor 文件变成 CRLF。vendor 的契约是
+// 「内容一致」而非「行尾一致」，但下面第 55 行是严格 !==，不规范化就会误报 Vendor drift。
+const toLf = text => text.replace(/\r\n/g, '\n')
 const root = fileURLToPath(new URL('../', import.meta.url))
 const source = resolve(dirname(fileURLToPath(import.meta.resolve('pi-ai-oauth-source'))), '..')
 const metadata = JSON.parse(await readFile(resolve(source, 'package.json'), 'utf8'))
 if (metadata.version !== '0.84.4') throw new Error('Review the upstream OAuth diff before changing the vendor pin')
 const files = ['auth/oauth/openai-codex.js', 'auth/oauth/device-code.js', 'auth/oauth/oauth-page.js', 'auth/oauth/pkce.js', 'utils/provider-env.js']
 for (const file of files) {
-  let body = await readFile(resolve(source, 'dist', file), 'utf8')
+  let body = toLf(await readFile(resolve(source, 'dist', file), 'utf8'))
   body = body.replace(/^\/\/# sourceMappingURL=.*\n?/gm, '')
   if (file === files[0]) {
     const jwtDecode = '        const decoded = atob(payload);'
@@ -52,7 +55,7 @@ ${tokenReader}`)
   }
   const target = resolve(root, 'vendor/pi-ai-oauth', file)
   if (!process.argv.includes('--write')) {
-    if (await readFile(target, 'utf8') !== body) throw new Error(`Vendor drift: ${file}`)
+    if (toLf(await readFile(target, 'utf8')) !== body) throw new Error(`Vendor drift: ${file}`)
   } else {
     await mkdir(dirname(target), { recursive: true })
     await writeFile(target, body)

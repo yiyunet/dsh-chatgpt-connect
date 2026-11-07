@@ -30,7 +30,7 @@ const output = join(root, 'output/playwright', phase2 ? 'task-session-phase2' : 
 await mkdir(output, { recursive: true })
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
 assert.equal(hash(await readFile(f.artifact)), f.artifactSha256)
-const plugin = join(f.home, 'profiles/web/node_modules/dsh-codex-connect')
+const plugin = join(f.home, 'profiles/web/node_modules/dsh-chatgpt-connect')
 const identity = {}
 const sourceFiles = (await readdir(join(f.source, 'lib'))).sort()
 assert.deepEqual((await readdir(join(plugin, 'lib'))).sort(), sourceFiles)

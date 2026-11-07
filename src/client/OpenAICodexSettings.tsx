@@ -376,7 +376,7 @@ export function AccountFeedback({ t, snapshot, store }: {
   const [copied, setCopied] = useState(false)
   const [copyFailed, setCopyFailed] = useState(false)
   const desktop = isOfficialDesktopShell()
-  const trustedOriginCommand = desktop ? undefined : `dsh plugin --profile web exec dsh-codex-connect trust-origin ${window.location.origin}`
+  const trustedOriginCommand = desktop ? undefined : `dsh plugin --profile web exec dsh-chatgpt-connect trust-origin ${window.location.origin}`
 
   const copyTrustedOriginCommand = async (): Promise<void> => {
     if (trustedOriginCommand === undefined) return

@@ -8,9 +8,9 @@ import type { OpenAICodexSettingsInjected } from './OpenAICodexSettings.tsx'
 /** Dependencies injected by the browser-plugin registration. */
 export type OpenAICodexPluginCardInjected = OpenAICodexSettingsInjected
 
-/** Props delivered by the Codex Connect Plugins settings tab. */
+/** Props delivered by the ANB 工具 shell tab (`anb.tool.tab`). */
 export type OpenAICodexPluginCardProps =
-  PropsRuntime<'settings.plugins.tab'>
+  PropsRuntime<'anb.tool.tab'>
   & OpenAICodexPluginCardInjected
 
 /** Render the complete Codex Connect settings page in its dedicated Plugins tab. */

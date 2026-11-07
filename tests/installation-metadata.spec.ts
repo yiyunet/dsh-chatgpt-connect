@@ -36,8 +36,8 @@ async function peers(modules: string, version = '0.2.0-rc.2'): Promise<void> {
 describe('bounded installation metadata', () => {
   it('does not follow shared profile ancestors or their legacy symlinks', async () => {
     const root = await fixture()
-    const plugin = join(root, 'profiles', 'desktop', 'node_modules', 'dsh-codex-connect', 'package.json')
-    await manifest(plugin, 'dsh-codex-connect', '0.2.0-alpha.4')
+    const plugin = join(root, 'profiles', 'desktop', 'node_modules', 'dsh-chatgpt-connect', 'package.json')
+    await manifest(plugin, 'dsh-chatgpt-connect', '0.2.0-alpha.4')
     const legacy = join(root, 'legacy', 'node_modules')
     await peers(legacy, '0.1.1-rc.2')
     for (const name of DSH_METADATA_PACKAGES) {
@@ -57,8 +57,8 @@ describe('bounded installation metadata', () => {
   it('uses only the plugin-own root followed by its immediate installation node_modules', async () => {
     const root = await fixture()
     const modules = join(root, 'node_modules')
-    const plugin = join(modules, 'dsh-codex-connect', 'package.json')
-    await manifest(plugin, 'dsh-codex-connect', '0.2.0-alpha.4')
+    const plugin = join(modules, 'dsh-chatgpt-connect', 'package.json')
+    await manifest(plugin, 'dsh-chatgpt-connect', '0.2.0-alpha.4')
     await peers(modules)
     await manifest(join(dirname(plugin), 'node_modules', '@earendil-works/pi-ai', 'package.json'), '@earendil-works/pi-ai', '0.85.1')
     expect((await detectCompatibility({ nodeVersion: 'v24.21.0', pluginManifestPath: plugin })).status).toBe('compatible')
@@ -70,9 +70,9 @@ describe('bounded installation metadata', () => {
 
   it('allows exact pnpm peer symlinks without broadening lookup to ancestors', async () => {
     const root = await fixture()
-    const peerModules = join(root, 'node_modules', '.pnpm', 'dsh-codex-connect@0.2.0-alpha.4', 'node_modules')
-    const plugin = join(peerModules, 'dsh-codex-connect', 'package.json')
-    await manifest(plugin, 'dsh-codex-connect', '0.2.0-alpha.4')
+    const peerModules = join(root, 'node_modules', '.pnpm', 'dsh-chatgpt-connect@0.2.0-alpha.4', 'node_modules')
+    const plugin = join(peerModules, 'dsh-chatgpt-connect', 'package.json')
+    await manifest(plugin, 'dsh-chatgpt-connect', '0.2.0-alpha.4')
     for (const name of [...DSH_METADATA_PACKAGES, '@earendil-works/pi-ai']) {
       const version = name === '@earendil-works/pi-ai' ? '0.85.1' : '0.2.0-rc.2'
       const directory = join(root, 'node_modules', '.pnpm', `${name.replace('/', '+')}@${version}`, 'node_modules', name)
@@ -82,7 +82,7 @@ describe('bounded installation metadata', () => {
       await symlink(directory, link, process.platform === 'win32' ? 'junction' : 'dir')
     }
     await peers(join(root, 'node_modules'), '0.1.1-rc.2')
-    const logicalPlugin = join(root, 'node_modules', 'dsh-codex-connect')
+    const logicalPlugin = join(root, 'node_modules', 'dsh-chatgpt-connect')
     await symlink(dirname(plugin), logicalPlugin, process.platform === 'win32' ? 'junction' : 'dir')
     const report = await detectCompatibility({ nodeVersion: 'v24.21.0', pluginManifestPath: join(logicalPlugin, 'package.json') })
     expect(report.status).toBe('compatible')
@@ -93,12 +93,12 @@ describe('bounded installation metadata', () => {
     const root = await fixture()
     const plugin = join(root, 'plugin', 'package.json')
     for (const version of [null, '', ' v0.2.0-alpha.4', '/private/secret', '0.2.0-alpha.04', '9999999999999999999999.0.0']) {
-      await manifest(plugin, 'dsh-codex-connect', version)
+      await manifest(plugin, 'dsh-chatgpt-connect', version)
       expect(await readInstalledPluginVersion(plugin)).toBeUndefined()
     }
     await manifest(plugin, 'unrelated', '0.2.0-alpha.4')
     expect(await readInstalledPluginVersion(plugin)).toBeUndefined()
-    await manifest(plugin, 'dsh-codex-connect', '0.2.0-alpha.4')
+    await manifest(plugin, 'dsh-chatgpt-connect', '0.2.0-alpha.4')
     expect(await readInstalledPluginVersion(plugin)).toBe('0.2.0-alpha.4')
     expect(await readPluginDependencyVersion('../../private', plugin)).toBeUndefined()
   })
@@ -126,7 +126,7 @@ describe('bounded installation metadata', () => {
   it('never uses local peers for an invalid explicit anchor and keeps pi-ai plugin-owned', async () => {
     const root = await fixture()
     const plugin = join(root, 'plugin', 'package.json')
-    await manifest(plugin, 'dsh-codex-connect', '0.2.0-alpha.4')
+    await manifest(plugin, 'dsh-chatgpt-connect', '0.2.0-alpha.4')
     await peers(join(dirname(plugin), 'node_modules'))
     await manifest(join(dirname(plugin), 'node_modules', '@earendil-works/pi-ai', 'package.json'), '@earendil-works/pi-ai', '0.85.1')
     const modules = join(root, 'host', 'node_modules')

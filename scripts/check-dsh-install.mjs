@@ -22,7 +22,11 @@ const DECLARED_RUNTIME_PACKAGES = new Set([
   ...Object.keys(PACKAGE_MANIFEST.peerDependencies ?? {}),
 ])
 const DECLARED_DSH_VERSIONS = COMPATIBILITY.dshPluginApi.versions
-const DECLARED_DSH_RANGE = DECLARED_DSH_VERSIONS.join(' || ')
+// 双轨之后，doctor 报告的 `supported` 是**有界区间**（与 engines.dsh 同源），
+// 不再是版本枚举拼接。DECLARED_DSH_VERSIONS 仍用于「请求的宿主必须已声明」校验。
+const DECLARED_DSH_RANGE = typeof PACKAGE_MANIFEST.engines?.dsh === 'string' && PACKAGE_MANIFEST.engines.dsh !== ''
+  ? PACKAGE_MANIFEST.engines.dsh
+  : DECLARED_DSH_VERSIONS.join(' || ')
 const RUNTIME_CHECK = resolve(REPO_ROOT, 'scripts/check-installed-runtime.mjs')
 const COMMAND_TIMEOUT_MS = 20 * 60 * 1000
 
@@ -305,7 +309,7 @@ export async function checkDshInstall({ pluginManagerCandidate } = {}) {
     requireSuccess('installed profile boot', profileHelp, 'compatibility')
 
     const doctor = await runCommand(dshBinary, [
-      'plugin', '--profile', 'web', 'exec', 'dsh-codex-connect', 'doctor', '--json',
+      'plugin', '--profile', 'web', 'exec', 'dsh-chatgpt-connect', 'doctor', '--json',
       '--install-anchor', join(installRoot, 'node_modules', '@deepseek-ai', 'dsh', 'package.json'),
     ], { cwd: workspace, env })
     validateDoctorResult(doctor, dshHome, REPO_ROOT, { allowUndeclaredCanaryVersion, dshVersion })

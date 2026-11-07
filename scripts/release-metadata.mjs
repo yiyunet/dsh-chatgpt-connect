@@ -57,10 +57,10 @@ export function validateReadmeInstallation(readmes, compatibility, packageVersio
   for (const [index, text] of readmes.entries()) {
     const languageLink = index === 0 ? '(docs/README.zh.md)' : '(../README.md)'
     const installLink = index === 0 ? '(INSTALL.md)' : '(../INSTALL.md)'
-    if (!/^# Codex Connect\s*$/mu.test(text) || !text.includes(languageLink) || !text.includes(installLink)) {
+    if (!/^# dsh-chatgpt-connect\s*$/mu.test(text) || !text.includes(languageLink) || !text.includes(installLink)) {
       failures.push('each README must include the product title, other language, and installation guide links')
     }
-    const commands = [...text.matchAll(/\bdsh plugin --profile [\w-]+ add dsh-codex-connect@([^\s`]+)/gu)]
+    const commands = [...text.matchAll(/\bdsh plugin --profile [\w-]+ add dsh-chatgpt-connect@([^\s`]+)/gu)]
     const distinct = [...new Set(commands.map(match => match[1]))]
     if (distinct.length !== 1 || !isAlphaReleaseVersion(distinct[0])) {
       failures.push('each README must recommend one exact Alpha version, not a moving tag or build identifier')

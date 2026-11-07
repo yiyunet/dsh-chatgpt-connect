@@ -84,7 +84,7 @@ vi.mock('node:fs/promises', async importOriginal => {
 
 const LIMIT = 256 * 1024
 const VERSION = '0.2.0-rc.2'
-const PLUGIN = 'dsh-codex-connect'
+const PLUGIN = 'dsh-chatgpt-connect'
 const PEER = '@deepseek-ai/dsh-llm'
 const roots: string[] = []
 

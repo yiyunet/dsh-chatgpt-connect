@@ -6,10 +6,10 @@ import './release-metadata.test.mjs'
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 const failures = []
 
-if (packageJson.name !== 'dsh-codex-connect') failures.push('package name must be dsh-codex-connect')
+if (packageJson.name !== 'dsh-chatgpt-connect') failures.push('package name must be dsh-chatgpt-connect')
 if (!isAlphaReleaseVersion(packageJson.version)) failures.push('package version must be a numeric Alpha release without build metadata')
 if (packageJson.publishConfig?.tag !== 'alpha') failures.push('publishConfig.tag must be alpha')
-if (packageJson.displayName !== 'Codex Connect') failures.push('displayName mismatch')
+if (packageJson.displayName !== 'ChatGPT Connect') failures.push('displayName mismatch')
 if (packageJson.description !== 'ChatGPT OAuth and Codex models for DeepSeek Harness.') failures.push('description mismatch')
 if (packageJson.author !== 'Frank Song') failures.push('package author must identify the Codex Connect author')
 if (!Array.isArray(packageJson.contributors) || !packageJson.contributors.includes('Yan-Zero (original dsh-codex author)')) {

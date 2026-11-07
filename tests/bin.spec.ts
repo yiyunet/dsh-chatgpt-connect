@@ -47,7 +47,7 @@ afterEach(async () => {
   root = undefined
 })
 
-describe('dsh-codex-connect CLI', () => {
+describe('dsh-chatgpt-connect CLI', () => {
   it('does not print opaque refresh response secrets', async () => {
     mocked.login.mockRejectedValue(new Error('Invalid response: {"refresh_token":"opaque-fixture-secret"}'))
     let output = ''
@@ -56,7 +56,7 @@ describe('dsh-codex-connect CLI', () => {
     expect(output).not.toContain('opaque-fixture-secret')
   })
   it('trusts, lists, and untrusts exact origins through the server CLI', async () => {
-    root = await mkdtemp(join(tmpdir(), 'dsh-codex-connect-bin-'))
+    root = await mkdtemp(join(tmpdir(), 'dsh-chatgpt-connect-bin-'))
     vi.stubEnv('DSH_HOME', root)
     let output = ''
     vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
@@ -85,12 +85,12 @@ describe('dsh-codex-connect CLI', () => {
       return true
     })
     await expect(run(['--help'])).resolves.toBe(0)
-    expect(output).toContain('Usage: dsh-codex-connect <doctor|login|logout|status>')
-    expect(output).toContain('dsh-codex-connect trust-origin <origin>')
-    expect(output).toContain('dsh-codex-connect trusted-origins [--json]')
+    expect(output).toContain('Usage: dsh-chatgpt-connect <doctor|login|logout|status>')
+    expect(output).toContain('dsh-chatgpt-connect trust-origin <origin>')
+    expect(output).toContain('dsh-chatgpt-connect trusted-origins [--json]')
     expect(output).toContain('doctor         inspect secret-free')
     expect(output).toContain('doctor [--install-anchor <absolute-dsh-package.json>]')
-    expect(output).toContain('dsh-codex-connect migrate-history [--apply --confirm-stopped]')
+    expect(output).toContain('dsh-chatgpt-connect migrate-history [--apply --confirm-stopped]')
     expect(output).toContain('migrate-history find or repair')
   })
 
@@ -120,7 +120,7 @@ describe('dsh-codex-connect CLI', () => {
 
   it.each([['match', 0], ['mismatch', 1], ['unknown', 1]] as const)('does not call unknown/mismatched plugin identity a successful receipt (%s)', async (state, code) => {
     mocked.diagnose.mockResolvedValue({
-      package: 'dsh-codex-connect', version: '0.2.0-alpha.4', node: 'v24.21.0',
+      package: 'dsh-chatgpt-connect', version: '0.2.0-alpha.4', node: 'v24.21.0',
       credentialFile: { state: 'missing' }, compatibility: { status: 'compatible' },
       capabilities: { search: false, imageTool: false, imageGeneration: false }, hints: [],
       identity: {
@@ -180,7 +180,7 @@ describe('dsh-codex-connect CLI', () => {
 
     await expect(run(['migrate-history', '--apply'])).resolves.toBe(1)
     expect(mocked.migrateHistory).not.toHaveBeenCalled()
-    expect(output).toMatch(/^dsh-codex-connect: invalid options for migrate-history/)
+    expect(output).toMatch(/^dsh-chatgpt-connect: invalid options for migrate-history/)
   })
 
   it('uses a consistent error prefix', async () => {
@@ -190,14 +190,14 @@ describe('dsh-codex-connect CLI', () => {
       return true
     })
     await expect(run(['doctor', '--device-code'])).resolves.toBe(1)
-    expect(output).toMatch(/^dsh-codex-connect:/)
+    expect(output).toMatch(/^dsh-chatgpt-connect:/)
     expect(output).not.toContain('dsh-openai-codex:')
   })
 
   it('emits one secret-free JSON document for doctor', async () => {
     const credentialPath = '/Users/fixture/.dsh/openai-codex-auth.json'
     mocked.diagnose.mockResolvedValue({
-      package: 'dsh-codex-connect',
+      package: 'dsh-chatgpt-connect',
       version: '0.1.0-alpha.4.8',
       node: 'v22.19.0',
       credentialFile: { path: credentialPath, state: 'owner-only', mode: '600' },
@@ -233,7 +233,7 @@ describe('dsh-codex-connect CLI', () => {
     const parsed: unknown = JSON.parse(output)
     expect(parsed).toMatchObject({
       schemaVersion: 1,
-      package: 'dsh-codex-connect',
+      package: 'dsh-chatgpt-connect',
       version: '0.1.0-alpha.4.8',
       node: 'v22.19.0',
       credentialFile: { state: 'owner-only', mode: '600' },
@@ -264,7 +264,7 @@ describe('dsh-codex-connect CLI', () => {
 
   it('returns exit 1 and a JSON compatibility status for an incompatible doctor report', async () => {
     mocked.diagnose.mockResolvedValue({
-      package: 'dsh-codex-connect',
+      package: 'dsh-chatgpt-connect',
       version: '0.1.0-alpha.4.8',
       node: 'v22.19.0',
       credentialFile: { path: '/Users/fixture/.dsh/openai-codex-auth.json', state: 'missing' },
@@ -321,7 +321,7 @@ describe('dsh-codex-connect CLI', () => {
     const parsed: unknown = JSON.parse(output)
     expect(parsed).toMatchObject({
       schemaVersion: 1,
-      package: 'dsh-codex-connect',
+      package: 'dsh-chatgpt-connect',
       status: expectedStatus,
     })
     expect(parsed).not.toHaveProperty('expiresAt')
@@ -356,6 +356,6 @@ describe('dsh-codex-connect CLI', () => {
     })
 
     await expect(run(argv)).resolves.toBe(1)
-    expect(output).toMatch(/^dsh-codex-connect: invalid options for /)
+    expect(output).toMatch(/^dsh-chatgpt-connect: invalid options for /)
   })
 })

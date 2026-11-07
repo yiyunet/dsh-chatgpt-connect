@@ -24,8 +24,12 @@ It is not a Beta/stable promotion or a requirement to upgrade DSH.
    `npm pack --dry-run`. `check` includes build and package checks, but not the
    browser or isolated-install suites. The matrix checks every exact declared DSH target and requires identical packed artifact hashes; it does not replace account acceptance. Regenerate the lockfile only for dependency
    changes. The packed files must include the
-   root `README.md` and Chinese document under `docs/`, with no localized README
-   beside the root README.
+   root `README.md`, `INSTALL.md`, `VERSIONING.md`, `MIGRATION.md`, `NOTICE` and the
+   bundled-CLI licence text under `docs/licenses/`, with no localized README beside the
+   root README. `docs/` as a whole is deliberately **not** shipped: publishing the upstream
+   release history inside this fork's artifact invites consumers to mistake an upstream
+   version for this fork's own. The bilingual documents remain in the repository and are
+   linked from the README.
 3. Merge the intended package version into `main` and start with a clean tree.
    The version must be a strict `MAJOR.MINOR.PATCH-alpha.NUMBER...` semver and
    must exactly match `package.json`.

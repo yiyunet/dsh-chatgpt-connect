@@ -5,7 +5,7 @@ import { assertRecoveryRun, packedManifest, recoverRelease, RECOVERY_REPOSITORY 
 
 const version = '0.1.0-alpha.4.34'
 const sha = 'a'.repeat(40)
-const packageName = 'dsh-codex-connect'
+const packageName = 'dsh-chatgpt-connect'
 const manifest = Buffer.from(JSON.stringify({ name: packageName, version }))
 const header = Buffer.alloc(512)
 header.write('package/package.json')

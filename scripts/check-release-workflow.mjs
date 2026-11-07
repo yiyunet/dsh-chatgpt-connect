@@ -7,8 +7,12 @@ import './recover-release.test.mjs'
 const workflowPath = fileURLToPath(new URL('../.github/workflows/release.yml', import.meta.url))
 const ciWorkflowPath = fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url))
 const packagePath = fileURLToPath(new URL('../package.json', import.meta.url))
-const workflow = readFileSync(workflowPath, 'utf8')
-const ciWorkflow = readFileSync(ciWorkflowPath, 'utf8')
+// 统一按 LF 解析。git 在 Windows 上默认把 *.yml 检出为 CRLF，而本文件多处契约用精确的
+// "\n  publish:\n"、"^      - name: ...\n" 做切分，CRLF 会让它们静默匹配失败（表现为
+// "3/39 failed" 而文件其实完全正确）。Linux CI 上本行是 no-op，不改变任何判定语义。
+const toLf = text => text.replace(/\r\n/g, '\n')
+const workflow = toLf(readFileSync(workflowPath, 'utf8'))
+const ciWorkflow = toLf(readFileSync(ciWorkflowPath, 'utf8'))
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'))
 
 const failures = []

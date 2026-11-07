@@ -8,8 +8,8 @@ import { runBoundedCommand } from './bounded-command.mjs'
 import { assertReleaseCI } from './verify-release-ci.mjs'
 import { isAlphaReleaseVersion } from './release-metadata.mjs'
 
-export const RECOVERY_REPOSITORY = 'franksong2702/dsh-codex-connect'
-const PACKAGE = 'dsh-codex-connect'
+export const RECOVERY_REPOSITORY = 'yiyunet/dsh-chatgpt-connect'
+const PACKAGE = 'dsh-chatgpt-connect'
 const SHA = /^[a-f0-9]{40}$/u
 const MAX_ARCHIVE = 8 * 1024 * 1024
 const digest = (bytes, algorithm) => createHash(algorithm).update(bytes).digest('hex')

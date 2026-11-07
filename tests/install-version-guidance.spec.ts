@@ -74,7 +74,8 @@ describe('installation version guidance', () => {
     const declared = JSON.parse(await readFile(new URL('../compatibility.json', import.meta.url), 'utf8'))
     expect(compatibility.pluginVersions.find((entry: { version: string }) => entry.version === '0.2.0-alpha.12')?.verifiedDshVersions)
       .toEqual(declared.dshPluginApi.versions)
-    expect(compatibility.pluginVersions.filter((entry: { version: string }) => entry.version !== '0.2.0-alpha.12')
+    expect(compatibility.pluginVersions
+      .filter((entry: { version: string }) => !['0.2.0-alpha.12', '0.3.1-alpha.1'].includes(entry.version))
       .every((entry: { verifiedDshVersions: string[] }) => !entry.verifiedDshVersions.includes('0.2.2-alpha.3'))).toBe(true)
   })
 

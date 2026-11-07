@@ -10,7 +10,7 @@ export async function runRequestMetricsCommand(argv: readonly string[]): Promise
     if (arg === '--json' && !json) { json = true; continue }
     const value = argv[i + 1]
     if ((arg !== '--file' && arg !== '--session') || value === undefined || value.startsWith('--') || value.length === 0 || value.length > 4096) {
-      process.stderr.write('Usage: dsh-codex-connect metrics --file <journal.jsonl> [--file <journal.jsonl>] [--session <DSH-session-id>] [--json]\n')
+      process.stderr.write('Usage: dsh-chatgpt-connect metrics --file <journal.jsonl> [--file <journal.jsonl>] [--session <DSH-session-id>] [--json]\n')
       return 1
     }
     if (arg === '--file') files.push(value)

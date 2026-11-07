@@ -57,7 +57,15 @@ export async function claimControlledRun(directory, runId, caseName) {
   if (!/^[a-z0-9][a-z0-9_-]{0,63}$/u.test(runId) || !CASE_NAMES.includes(caseName)) fail('INVALID_MODE')
   await mkdir(directory, { mode: 0o700, recursive: true })
   const info = await lstat(directory)
-  if (!info.isDirectory() || info.isSymbolicLink() || (info.mode & 0o077) !== 0 || info.uid !== process.getuid()) fail('RUN_LEDGER_UNSAFE')
+  if (!info.isDirectory() || info.isSymbolicLink()) fail('RUN_LEDGER_UNSAFE')
+  // POSIX（含 macOS/Linux）：mode 位确认 group/other 无权限，uid 确认归属当前用户。
+  // Windows：fs.stat().mode 不携带 POSIX 权限位；且 `process.getuid` 在 Windows 上**不存在**，
+  // 原判定会在 `mode & 0o077` 处先失败，即使放开也会随后抛 TypeError。因此 Windows 只保留
+  // 「真实目录 + 非符号链接」两项，刻意降级——账本目录位于仓库内固定路径，不面向外部输入。
+  // 分支条件为 `!== 'win32'`，macOS 走原 POSIX 分支，行为不变。
+  if (process.platform !== 'win32' && ((info.mode & 0o077) !== 0 || info.uid !== process.getuid())) {
+    fail('RUN_LEDGER_UNSAFE')
+  }
   let handle
   try { handle = await open(join(directory, `${runId}.json`), 'wx', 0o600) }
   catch (error) { if (error.code === 'EEXIST') fail('RUN_ALREADY_CLAIMED_NO_RETRY'); throw error }

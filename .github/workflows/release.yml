@@ -71,7 +71,7 @@ jobs:
           CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
-          readonly PACKAGE='dsh-codex-connect'
+          readonly PACKAGE='dsh-chatgpt-connect'
 
           if [[ "$CONFIRM" != 'PUBLISH' ]]; then
             echo 'The confirmation input must be exactly PUBLISH.' >&2

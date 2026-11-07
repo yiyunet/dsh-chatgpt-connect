@@ -14,7 +14,7 @@ export async function runCapabilityCommand(args: readonly string[]): Promise<num
   let json = false
   const seen = new Set<string>()
   const invalid = (): number => {
-    process.stderr.write('Usage: dsh-codex-connect capabilities [--model <catalog-id>] [--probe] [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]\n')
+    process.stderr.write('Usage: dsh-chatgpt-connect capabilities [--model <catalog-id>] [--probe] [--proxy <http(s)-origin>] [--timeout-ms <1..60000>] [--json]\n')
     return 2
   }
   for (let index = 0; index < args.length; index += 1) {

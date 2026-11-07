@@ -50,7 +50,7 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === SELF) {
       ])
       const { ctx, importHost, importProfile } = await createInstalledHostContext(profilePath, hostPath)
       try {
-        const plugin = await importProfile('dsh-codex-connect')
+        const plugin = await importProfile('dsh-chatgpt-connect')
         const options = { root, compression, plugin, importHost }
         let report
         if (phase === 'automatic') {

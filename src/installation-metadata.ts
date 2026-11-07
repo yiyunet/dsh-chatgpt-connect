@@ -5,7 +5,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isRuntimeMetadataVersion } from './runtime-identity.ts'
 
-const PLUGIN_PACKAGE = 'dsh-codex-connect'
+const PLUGIN_PACKAGE = 'dsh-chatgpt-connect'
 const DSH_PACKAGE = '@deepseek-ai/dsh'
 const MAX_MANIFEST_BYTES = 256 * 1024
 const PLUGIN_MANIFEST = fileURLToPath(new URL('../package.json', import.meta.url))

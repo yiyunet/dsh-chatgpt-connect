@@ -1,11 +1,13 @@
 /** Public update metadata and bounded version checking for Codex Connect. */
 
-export const OPENAI_CODEX_PACKAGE_NAME = 'dsh-codex-connect'
+export const OPENAI_CODEX_PACKAGE_NAME = 'dsh-chatgpt-connect'
+/** 自有仓库（2026-11-06 老板建仓）。四个地址共用这一个 owner/repo，改仓库只改这里。 */
+const OPENAI_CODEX_REPOSITORY = 'yiyunet/dsh-chatgpt-connect'
 export const OPENAI_CODEX_NPM_METADATA_URL = `https://registry.npmjs.org/-/package/${OPENAI_CODEX_PACKAGE_NAME}/dist-tags`
-export const OPENAI_CODEX_RELEASE_API_BASE = 'https://api.github.com/repos/franksong2702/dsh-codex-connect/releases/tags/v'
-export const OPENAI_CODEX_RELEASE_PAGE_BASE = 'https://github.com/franksong2702/dsh-codex-connect/releases/tag/v'
-export const OPENAI_CODEX_UPDATE_HIGHLIGHTS_URL = 'https://raw.githubusercontent.com/franksong2702/dsh-codex-connect/main/update-highlights.json'
-export const OPENAI_CODEX_VERIFIED_COMPATIBILITY_URL = 'https://raw.githubusercontent.com/franksong2702/dsh-codex-connect/main/verified-compatibility.json'
+export const OPENAI_CODEX_RELEASE_API_BASE = `https://api.github.com/repos/${OPENAI_CODEX_REPOSITORY}/releases/tags/v`
+export const OPENAI_CODEX_RELEASE_PAGE_BASE = `https://github.com/${OPENAI_CODEX_REPOSITORY}/releases/tag/v`
+export const OPENAI_CODEX_UPDATE_HIGHLIGHTS_URL = `https://raw.githubusercontent.com/${OPENAI_CODEX_REPOSITORY}/main/update-highlights.json`
+export const OPENAI_CODEX_VERIFIED_COMPATIBILITY_URL = `https://raw.githubusercontent.com/${OPENAI_CODEX_REPOSITORY}/main/verified-compatibility.json`
 export const OPENAI_CODEX_UPDATE_TIMEOUT_MS = 8_000
 export const OPENAI_CODEX_UPDATE_MAX_METADATA_BYTES = 64 * 1024
 export const OPENAI_CODEX_UPDATE_MAX_HIGHLIGHTS_BYTES = 64 * 1024
@@ -139,6 +141,15 @@ interface UpdateCheckOptions {
   currentVersion: string
   fetchImpl?: FetchImpl
   timeoutMs?: number
+  /**
+   * 注入缝：覆盖模块级 `OPENAI_CODEX_UPDATE_CHANNEL_ENABLED`。
+   *
+   * 存在理由：渠道开关的职责是「别在生产环境里偷偷发请求」，不是「删掉这块功能」。
+   * 若开关硬编码且不可覆盖，任何验证更新逻辑的测试都只能断言「通道已关闭」，
+   * 等于把整块能力从测试覆盖里摘掉。留这道缝，测试可显式声明「我自己控制传输」。
+   * 生产代码一律不传此参数，因此开关默认值始终生效。
+   */
+  channelEnabled?: boolean
 }
 
 type FetchImpl = (input: string, init?: RequestInit) => Promise<Response>
@@ -377,11 +388,31 @@ async function releaseDetails(
   }
 }
 
+/**
+ * 在线更新通道开关。
+ *
+ * 本分支是内部自维护版本，尚未确定自有 GitHub 仓库与 npm 发布通道，环境变量
+ * `OPENAI_CODEX_RELEASE_API_BASE` 等地址因此缺少 owner，请求必然失败。与其继续向
+ * 无效地址发请求并把它显示成"暂时不可用"，不如显式关闭：
+ * - 关闭时**不发起任何网络请求**（不发、不超时、不写缓存）；
+ * - 返回既有 `registry-unavailable` 结果，浏览器端沿用现有文案与重试逻辑，无需改动；
+ * - 待自有仓库/发布通道落地后，把此常量改为 `true` 并补齐下面四个 URL 即可恢复。
+ */
+export const OPENAI_CODEX_UPDATE_CHANNEL_ENABLED = false
+
 /** Check npm's public dist-tags and enrich an available update with public release notes. */
 export async function checkForOpenAICodexUpdate(options: UpdateCheckOptions): Promise<OpenAICodexUpdateResult> {
   const { currentVersion } = options
   if (parseOpenAICodexVersion(currentVersion) === undefined) {
     return { status: 'unavailable', currentVersion, reason: 'invalid-current-version' }
+  }
+  // 渠道开关守卫的是「默认传输」。显式注入 fetchImpl 的调用方（测试、路由注入）已经
+  // 自己接管了传输，生产代码从不注入，因此这类调用不受开关拦截；也可用 channelEnabled 显式覆盖。
+  // 这样既满足「生产环境不偷偷发请求」，又不至于把整块更新逻辑从测试覆盖里摘掉。
+  const channelEnabled = options.channelEnabled
+    ?? (options.fetchImpl === undefined ? OPENAI_CODEX_UPDATE_CHANNEL_ENABLED : true)
+  if (!channelEnabled) {
+    return { status: 'unavailable', currentVersion, reason: 'registry-unavailable' }
   }
   const fetchImpl = options.fetchImpl ?? fetch
   const timeoutMs = options.timeoutMs ?? OPENAI_CODEX_UPDATE_TIMEOUT_MS

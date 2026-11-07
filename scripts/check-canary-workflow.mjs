@@ -14,13 +14,17 @@ const packagePath = fileURLToPath(new URL('../package.json', import.meta.url))
 const installCheckPath = fileURLToPath(new URL('./check-dsh-install.mjs', import.meta.url))
 const nextCheckPath = fileURLToPath(new URL('./check-dsh-next.mjs', import.meta.url))
 const canaryEnvironmentPath = fileURLToPath(new URL('./canary-environment.mjs', import.meta.url))
-const workflow = readFileSync(workflowPath, 'utf8')
-const ciWorkflow = readFileSync(ciWorkflowPath, 'utf8')
+// 与 check-release-workflow.mjs 同因：Windows 检出把 *.yml/*.mjs 变成 CRLF，而本文件多条契约
+// 用 "contents: read\n      issues: write$" 这类精确行尾切分，CRLF 会让它们静默失配
+// （表现为 1/114 或 3/39 这种"少数失败"）。Linux CI 上是 no-op，不改变判定语义。
+const toLf = text => text.replace(/\r\n/g, '\n')
+const workflow = toLf(readFileSync(workflowPath, 'utf8'))
+const ciWorkflow = toLf(readFileSync(ciWorkflowPath, 'utf8'))
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'))
-const installCheck = readFileSync(installCheckPath, 'utf8')
-const nextCheck = readFileSync(nextCheckPath, 'utf8')
-const canaryEnvironment = readFileSync(canaryEnvironmentPath, 'utf8')
-const declaredWorkflow = readFileSync(new URL('../.github/workflows/compatibility-canary.yml', import.meta.url), 'utf8')
+const installCheck = toLf(readFileSync(installCheckPath, 'utf8'))
+const nextCheck = toLf(readFileSync(nextCheckPath, 'utf8'))
+const canaryEnvironment = toLf(readFileSync(canaryEnvironmentPath, 'utf8'))
+const declaredWorkflow = toLf(readFileSync(new URL('../.github/workflows/compatibility-canary.yml', import.meta.url), 'utf8'))
 
 const failures = []
 let assertionCount = 0

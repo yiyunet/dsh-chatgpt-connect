@@ -1,6 +1,6 @@
 /** Offline aggregation of request journals. Missing observations never become zero-cost work. */
 import { constants } from 'node:fs'
-import { open } from 'node:fs/promises'
+import { lstat, open } from 'node:fs/promises'
 import type { RequestMetricEvent, RequestMetricFinish, RequestMetricStart, RequestMetricUsage } from './request-metrics.ts'
 
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -35,10 +35,18 @@ export interface MetricJournal {
 }
 /** Bounded regular-file reads; a live/crashed final partial line is disclosed, not silently counted. */
 export async function readMetricJournal(filename: string): Promise<MetricJournal> {
+  // O_NOFOLLOW 只在 POSIX（Linux/macOS）生效，Windows 不支持该标志——单靠它等于不设防，
+  // 符号链接会被照常跟随。因此先 lstat 拒绝符号链接与非常规文件，打开后再用描述符身份
+  // （dev+ino）核对「打开的正是刚才检查的那个文件」，堵住检查与打开之间的替换窗口。
+  // dev/ino 在 Windows 上同样有值；若平台给出 0/0，两侧相等仍放行，不会误拒。
+  const leaf = await lstat(filename)
+  if (leaf.isSymbolicLink() || !leaf.isFile()) throw new Error('Invalid metrics journal size or file type')
   const file = await open(filename, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
   try {
     const stat = await file.stat()
-    if (!stat.isFile() || stat.size > 64 * 1024 * 1024) throw new Error('Invalid metrics journal size or file type')
+    if (!stat.isFile() || stat.dev !== leaf.dev || stat.ino !== leaf.ino || stat.size > 64 * 1024 * 1024) {
+      throw new Error('Invalid metrics journal size or file type')
+    }
     const buffer = Buffer.alloc(stat.size)
     let read = 0
     while (read < buffer.length) {

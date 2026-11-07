@@ -58,7 +58,7 @@ export async function checkInstalledMetrics(importHost, CodexConnect, profilePac
     assert.equal(files.length, 1)
     const file = join(metrics, files[0])
     assert.doesNotMatch(await readFile(file, 'utf8'), /fixture-refresh|metrics-fixture|fixture-response/)
-    const entry = createRequire(profilePackagePath).resolve('dsh-codex-connect')
+    const entry = createRequire(profilePackagePath).resolve('dsh-chatgpt-connect')
     const report = JSON.parse(execFileSync(process.execPath, [join(dirname(entry), 'bin.js'), 'metrics', '--file', file, '--json'], {
       encoding: 'utf8', timeout: 10000,
     }))

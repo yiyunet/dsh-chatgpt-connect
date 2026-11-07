@@ -1,5 +1,7 @@
 # Installation Runbook for CLI Agents
 
+**This fork — `dsh-chatgpt-connect@0.3.1-alpha.1`, not yet published.** It is a self-maintained fork of [`franksong2702/dsh-codex-connect`](https://github.com/franksong2702/dsh-codex-connect). Its own install command is given in the quick-install section below. **Every `dsh-codex-connect@…` command in this document is upstream history under the previous package name and refers to a different npm artifact, not this fork.**
+
 **Published Alpha 12:** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) retires Luna Reserve, adds exact stock DSH `0.2.2-alpha.3` with recovery-only Task handling and fixes the stock Auto review preset's unsupported Codex temperature. Registry version/alpha, matching source tag/prerelease and archive integrity have been independently verified. `latest` remains Alpha 10. See the bilingual [release and migration notes](docs/release-notes/0.2.0-alpha.12.md). No daily Host upgrade is implied.
 
 The published Alpha 12 pairing on exact alpha.3 retains saved Task inspection, authenticated Stop/manual takeover and existing strictly checked safe-disable/archive exits. It refuses automatic routing/resume/delegation without deleting saved data or resetting spent requests. The prior fourteen Hosts and closed public activation gate remain unchanged.
@@ -179,6 +181,14 @@ The Alpha 4.35 rows reflect successful release-commit CI on Node 22.19.0 and 24.
 Alpha 4.33 omits the `modelErrors` profile field required by RC model packages, producing `Cannot read properties of undefined (reading 'get')`. Alpha 4.34 contains the fix, retained in 4.35. Reauthorization or repeated model-list retries do not add a missing profile field. Pin the corrected plugin version for a verified host combination; do not delete credentials or change DSH merely to work around this failure. DSH `0.1.5-alpha.2` remains unverified.
 
 ### Install the selected version and validate
+
+**This fork — `dsh-chatgpt-connect@0.3.1-alpha.1`, not yet published.** The exact-version commands further down target the **previous package name** and do not install this fork; they are kept only to reproduce older upstream pairings.
+
+```sh
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.1
+```
+
+Then continue with the validation steps in this section.
 
 1. Complete the version selection above. The commands below use `web`; substitute only the requested profile.
 2. Install the selected exact version. For DSH `0.1.0-rc.7`:

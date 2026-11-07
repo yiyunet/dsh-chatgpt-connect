@@ -1,10 +1,15 @@
 import { readFileSync } from 'node:fs'
 import type { UserConfig } from 'tsdown'
 
-const PLUGIN_ID = 'dsh-codex-connect'
-const PACKAGE_VERSION = (JSON.parse(
+// 客户端模块注册 id 必须与 package.json 的 name 完全一致。
+// DSH 的 client-modules 加载器要求 `__ModuleLoader__.load({ id })` 的 id 等于包名，
+// 否则启动时报 'loaded without registering <包名>' 并拒绝激活该插件。
+// 从 package.json 派生，杜绝"改了包名但忘了改这里"的漂移。
+const PACKAGE = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
-) as { version: string }).version
+) as { name: string; version: string }
+const PLUGIN_ID = PACKAGE.name
+const PACKAGE_VERSION = PACKAGE.version
 const CLIENT_EXTERNALS = [
   'react',
   'react/jsx-runtime',

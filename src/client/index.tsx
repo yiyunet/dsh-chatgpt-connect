@@ -39,11 +39,20 @@ import { OpenAICodexAccountStore } from './account-store.ts'
 import { OpenAICodexModelsCard } from './OpenAICodexModelsCard.tsx'
 import { PublishedAdaptiveTaskControl as AdaptiveTaskControl } from './PublishedAdaptiveTaskControl.tsx'
 import { OpenAICodexConfigForm } from './config-form.ts'
+import { guardShell, SHELL_SLOT } from './anb-shell.mjs'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** OpenAI Codex account page copy. */
     'settings.openai-codex': OpenAICodexSettingsKey
+  }
+
+  /**
+   * ANB 工具壳独占的子槽位（部门约定，见 N29）。壳把它投影成标签行，
+   * 各 ANB 插件的面板注册进这里。宿主没有内置这个槽位，因此由本插件增补声明。
+   */
+  interface SlotMap {
+    'anb.tool.tab': { kind: 'list'; scope: 'root' }
   }
 }
 
@@ -68,16 +77,21 @@ export function apply(ctx: ClientContext): void {
     ctx.configForms.get<OpenAICodexSettingsConfig>(OPENAI_CODEX_SETTINGS_NAMESPACE),
     ctx.configForms.describe(),
   )
-  ctx.effect(() => ctx.configForms.whileServed([OPENAI_CODEX_SETTINGS_NAMESPACE], () => {
-    return ctx.slots.register({
-      name: 'settings.plugins.tab',
-      id: 'codex-connect',
-      order: 40,
+  // ── 设置入口归口「ANB 工具」（N29 · 老板 2026-10-30 令）──────────────────
+  // 面板挂到壳独占的 `anb.tool.tab` 槽位，由壳统一注册 `settings.section`。
+  // 本插件**不再**注册 settings.section / settings.plugins.tab —— 设置里只留一个人口。
+  // `anb.tool.tab` 已在上方 `declare module` 里并入宿主 SlotMap，无需类型断言。
+  ctx.effect(() => {
+    guardShell(ctx)
+    return ctx.configForms.whileServed([OPENAI_CODEX_SETTINGS_NAMESPACE], () => ctx.slots.inject(SHELL_SLOT, () => ctx.slots.register({
+      name: SHELL_SLOT,
+      id: 'chatgpt-connect',
+      order: 20,
       locale: namespace,
       label: () => t('title'),
       inject: (): OpenAICodexPluginCardInjected => ({ t, configScope, updater, account }),
-    }, OpenAICodexPluginCard)
-  }), 'dsh-codex-connect: settings page while served')
+    }, OpenAICodexPluginCard)))
+  }, 'dsh-chatgpt-connect: anb tool tab')
 
   ctx.slots.inject('settings.models.footer', () => ctx.slots.register({
     name: 'settings.models.footer',

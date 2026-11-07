@@ -79,7 +79,17 @@ syncBuiltinESMExports();
       ...anchor === undefined ? [] : ['--install-anchor', anchor],
     ], { cwd: fixture, env, timeoutMs: 15_000, maxBuffer: 16_384 })
     if (result.error || result.cleanupError || result.status !== status || result.stdout.trim().split('\n').length !== 1) {
-      throw new Error('direct doctor read-only execution failed')
+      // 原实现只说 "failed"，无法区分「退出码不对」「超时」「子进程自己报错」三种完全不同的成因。
+      // 这里把判定依据一并带出（只含本次合成的 fixture 环境信息）。
+      const detail = [
+        `exit=${String(result.status ?? 'unknown')}`,
+        `expected=${String(status)}`,
+        `lines=${String(result.stdout.trim() === '' ? 0 : result.stdout.trim().split('\n').length)}`,
+        result.error === undefined ? '' : `error=${String(result.error)}`,
+        result.cleanupError === undefined ? '' : `cleanup=${String(result.cleanupError)}`,
+        result.stderr.trim() === '' ? '' : `stderr=${result.stderr.trim().slice(0, 800)}`,
+      ].filter(part => part !== '').join('; ')
+      throw new Error(`direct doctor read-only execution failed (${detail})`)
     }
     const report = JSON.parse(result.stdout)
     if (report.schemaVersion !== 1 || report.identity?.pluginVersionState !== 'match'

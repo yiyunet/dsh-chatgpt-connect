@@ -6,7 +6,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = 'dsh-codex-connect'
+const PACKAGE_NAME = 'dsh-chatgpt-connect'
 
 /** Cordis companion plugin name. */
 export const name = 'openai-codex-invariant'

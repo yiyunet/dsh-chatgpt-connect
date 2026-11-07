@@ -4,3 +4,11 @@ node_modules/
 .playwright-cli/
 .issue211-artifacts/
 .remember-acceptance-runs/
+# Local diagnostic output (not committed)
+vitest-*.txt
+check-*.txt
+git-status.txt
+*-id.txt
+git-after.txt
+git-verify.txt
+build-label.txt

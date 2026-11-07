@@ -1,4 +1,17 @@
-# Codex Connect
+# dsh-chatgpt-connect
+
+**本分支 —— 版本 `0.3.1-alpha.1`，尚未发布。** 它是 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect) 的自维护分支，后者又派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex)。自下方 **上游历史发布** 一节起，全部描述的是以旧包名 `dsh-codex-connect` 发布的上游版本；其包名与版本号**刻意保持原样**，不改写。
+
+本分支相对上游的改动：
+
+- **准入与已验证分离**：包声明有界宿主区间（`>=0.1.7-rc.1 <0.3.0`），区间内的 DSH 更新不再拒载；只有维护者实测过的版本才报告 `compatible`，区间内其余版本一律报告 `unverified`，不声称可用。
+- **包名与 CLI 名均为 `dsh-chatgpt-connect`**；设置面板标题为「ChatGPT Connect」，中文语种下 ANB 工具选项卡显示「ChatGPT连接」。
+- **在线更新通道已关闭**：面板显示无法取得更新信息，这是设计行为，关闭期间不发起任何网络请求。
+- **Windows 验收通道可用**：native-compaction 验收脚本不再在 Windows 上套用 POSIX 专属的权限与归属检查；POSIX 行为不变。
+
+上游曾用 `dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12` 安装。那是**另一个 npm 包**，由上游以旧包名发布，不含上述任何改动。安装本分支请用[快速开始](#快速开始)中的命令。
+
+## 上游历史发布（旧包名）
 
 **已发布 Alpha 12：** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) 在下述仅恢复限制下适配精确的 stock DSH `0.2.2-alpha.3`，退役 Luna Reserve，并修复自带 Auto review preset 的 Codex Responses temperature 参数错误。发布渠道为 `alpha`，`latest` 保持 Alpha 10。参见[发行与迁移说明](release-notes/0.2.0-alpha.12.md)。这不要求升级 DSH。
 
@@ -6,7 +19,7 @@
 
 当前开发遵循[核心维护范围](maintenance-scope.md)：保留接入、兼容、诊断与恢复，冻结 Task 自动编排及未证明收益的优化。此决定不会删除已发布选项，也不会远程停用已有安装。
 
-[![npm version](https://img.shields.io/npm/v/dsh-codex-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-codex-connect)
+[![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 
 [English](../README.md) | 中文
 
@@ -22,11 +35,11 @@ Codex Connect 为标准 Harness agent loop 添加 `openai-codex` 模型提供方
 
 **历史 Alpha 10：** [`0.2.0-alpha.10`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.10) 仅新增精确 DSH `0.2.1-rc.3`，保留原有 11 个宿主，并交付默认关闭的只读额度工具及紧凑速度菜单。npm 版本、alpha 标签、Git tag、prerelease 和包哈希已独立回读；`latest` 不变。rc.3 的上游 Git 源码映射仍未验证；无凭据合约不代表真实账户／模型或 Desktop 验收。参见[发布记录](release-notes/0.2.0-alpha.10.md)。
 
-本指南推荐 Codex Connect `0.2.0-alpha.12` / DSH `0.2.1-rc.5`；其他受支持的精确宿主版本见下表。请先运行 `dsh --version`，再用 `doctor --json` 做本地诊断；单凭 CLI 版本无法证明实际安装的模型运行库版本，缺少版本元数据时会报告未知。其他版本请查阅[安装与升级](../INSTALL.md)。`alpha` 等会移动的 npm tag 不代表兼容性保证。
+本分支**不沿用**上游的"推荐版本"说法：安装本 fork 请用上文「快速开始」中的命令。下表记录的是**上游历史已验证组合**，仅用于复现旧组合，不适用于本分支。上游当时的推荐为 Codex Connect `0.2.0-alpha.12` / DSH `0.2.1-rc.5`；其他受支持的精确宿主版本见下表。请先运行 `dsh --version`，再用 `doctor --json` 做本地诊断；单凭 CLI 版本无法证明实际安装的模型运行库版本，缺少版本元数据时会报告未知。其他版本请查阅[安装与升级](../INSTALL.md)。`alpha` 等会移动的 npm tag 不代表兼容性保证。
 
 | 要求 | 已验证组合 |
 |---|---|
-| Codex Connect | `0.2.0-alpha.12` |
+| Codex Connect（上游历史） | `0.2.0-alpha.12` |
 | DeepSeek Harness | `0.1.7-rc.1`、`0.1.7-rc.2`、`0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`、`0.2.1-rc.4`、`0.2.1-rc.5` 或 `0.2.2-alpha.3`（包版本必须一致） |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
 | 账户 | 通过 ChatGPT OAuth 使用所请求的 Codex 模型；可用性由 OpenAI 决定 |
@@ -58,7 +71,7 @@ Codex Connect 为标准 Harness agent loop 添加 `openai-codex` 模型提供方
 ### 1. 安装
 
 ```sh
-dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.1
 dsh web
 ```
 
@@ -179,7 +192,7 @@ pnpm run check:dsh-install
 
 ## 许可证与致谢
 
-Codex Connect 的修改与新增工作 Copyright 2026 Frank Song。本项目包含派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) 的软件；上游内容继续保留 Copyright 2026 Yan-Zero。两部分均按 Apache-2.0 发布，详情见 [NOTICE](../NOTICE)。
+Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改与新增工作 Copyright 2026 yiyunet。本项目包含派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) 的软件，并 fork 自 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect)；所有上游版权均予保留。全部按 Apache-2.0 发布，详情见 [NOTICE](../NOTICE)。
 
 已发布的 `0.2.0-alpha.1` 将 `gpt-6.1-sol` 加入手动模型目录与配置选择器，支持 Low、Medium、High、Xhigh、Max；Default 不显式发送推理强度，不支持 Ultra 编排。该版本当时的 Codex 回退值为 272,000，允许的本地配置上限为 872,000；这不是 API 产品窗口，也不能证明账户访问权限。详见[元数据与验证](agent-notes/gpt61-sol-support.md)。不会扩大 Adaptive Task 授权。
 

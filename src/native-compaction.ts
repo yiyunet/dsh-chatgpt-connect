@@ -32,6 +32,56 @@ const CHECKPOINT_OPEN = '<dsh-codex-connect-native-compaction-v1>'
 const CHECKPOINT_CLOSE = '</dsh-codex-connect-native-compaction-v1>'
 const SENTINEL_PREFIX = '<dsh-codex-connect-native-checkpoint:'
 const SENTINEL_SUFFIX = '>'
+/** 已警告过的残缺形态，去重避免逐请求刷屏。 */
+const WARNED_CHECKPOINT_SHAPES = new Set<string>()
+/**
+ * 被截断的 checkpoint 剩下的是一整段 base64url payload；而「提到该标记」的自然语言不会长这样。
+ * 64 字符下限远低于真实 payload（受 2 MiB 上限约束），足以把两种情形分开。
+ */
+const TRUNCATED_PAYLOAD = /^[A-Za-z0-9_-]{64,}$/u
+
+/** checkpoint 文本的形态；`reference` 表示只是被提及，不是本插件写的记录。 */
+export type NativeCheckpointShape = 'complete' | 'truncated-head' | 'truncated-tail' | 'reference'
+
+/**
+ * 判断一段文本是本插件写的 checkpoint，还是仅仅提到了标记。
+ *
+ * 判据是「首尾包裹 + 截断特征」，而不是「是否包含标记字符串」——后者会让任何引用该标记的
+ * 摘要被误认为 checkpoint（曾导致整轮因 `marker is malformed` 崩溃）。
+ * @param text - 待判定的单个文本块。
+ * @returns 形态分类；除 `complete` 外都不构成本插件记录。
+ */
+export function classifyNativeCheckpointText(text: string): NativeCheckpointShape {
+  const opens = text.startsWith(CHECKPOINT_OPEN)
+  const closes = text.endsWith(CHECKPOINT_CLOSE)
+  if (opens && closes) return 'complete'
+  if (opens) {
+    return TRUNCATED_PAYLOAD.test(text.slice(CHECKPOINT_OPEN.length).trimEnd()) ? 'truncated-tail' : 'reference'
+  }
+  if (closes) {
+    return TRUNCATED_PAYLOAD.test(text.slice(0, text.length - CHECKPOINT_CLOSE.length).trimStart()) ? 'truncated-head' : 'reference'
+  }
+  return 'reference'
+}
+
+/**
+ * 记录一次「真 checkpoint 疑似被截断」的运行期警告。
+ *
+ * 这一层是纯模块、纯函数，拿不到 `ctx.logger`，故用 Node 的 `process.emitWarning` 保证在宿主
+ * 终端/日志可见；同形态只报一次，避免逐请求刷屏。忽略仍是忽略——不允许为此中断本轮。
+ * @param shape - 截断形态，决定措辞与去重键。
+ */
+function warnTruncatedCheckpoint(shape: 'truncated-head' | 'truncated-tail'): void {
+  if (WARNED_CHECKPOINT_SHAPES.has(shape)) return
+  WARNED_CHECKPOINT_SHAPES.add(shape)
+  process.emitWarning(
+    'dsh-chatgpt-connect: a native compaction checkpoint looks '
+    + `${shape === 'truncated-tail' ? 'truncated at the end' : 'truncated at the start'}; `
+    + 'it was treated as ordinary text, so this session may lose native-compaction history. '
+    + 'Start a new session if the summary looks incomplete.',
+  )
+}
+
 const CODEX_TOOL_CALL_PROVIDERS = new Set(['openai', 'openai-codex', 'opencode'])
 const MAX_NATIVE_COMPACTION_RETRIES = 2
 
@@ -113,13 +163,20 @@ export function encodeNativeCompactionCheckpoint(items: readonly unknown[]): str
 export function decodeNativeCompactionCheckpoint(message: Message): readonly unknown[] | undefined {
   if (!isCompactCheckpointSource(message)) return undefined
   const candidates = message.content.filter(isTextBlock).map(block => block.text)
-  const marked = candidates.filter(text => text.includes(CHECKPOINT_OPEN) || text.includes(CHECKPOINT_CLOSE))
-  if (marked.length === 0) return undefined
-  if (marked.length !== 1) throw new Error('Codex native compaction checkpoint marker is ambiguous')
-  const text = marked[0]!
-  if (!text.startsWith(CHECKPOINT_OPEN) || !text.endsWith(CHECKPOINT_CLOSE)) {
-    throw new Error('Codex native compaction checkpoint marker is malformed')
+  // 只有首尾完整包裹的文本才是本插件写的 checkpoint。摘要、报告或对话里被引用的 marker
+  // 字面量（User-authored marker text）不构成权威，必须按普通文本忽略，而不是抛错毁掉整轮。
+  const complete = candidates.filter(text => text.startsWith(CHECKPOINT_OPEN) && text.endsWith(CHECKPOINT_CLOSE))
+  if (complete.length === 0) {
+    // 完全没提标记 = 普通内容，静默忽略；提了标记但首尾残缺、且残留长 payload = 真记录疑似被
+    // 截断，必须留下可观测证据，但仍按普通文本处理，不允许中断本轮。
+    for (const text of candidates) {
+      const shape = classifyNativeCheckpointText(text)
+      if (shape === 'truncated-head' || shape === 'truncated-tail') warnTruncatedCheckpoint(shape)
+    }
+    return undefined
   }
+  if (complete.length !== 1) throw new Error('Codex native compaction checkpoint marker is ambiguous')
+  const text = complete[0]!
   const encoded = text.slice(CHECKPOINT_OPEN.length, text.length - CHECKPOINT_CLOSE.length)
   if (encoded.length === 0 || Buffer.byteLength(encoded) > Math.ceil(OPENAI_CODEX_NATIVE_COMPACTION_MAX_CHECKPOINT_BYTES * 4 / 3) + 32) {
     throw new Error('Codex native compaction checkpoint payload is invalid or oversized')

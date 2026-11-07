@@ -113,7 +113,7 @@ describe('Desktop OAuth account UI', () => {
     const mounted = mount()
     mounted.root.render(<OpenAICodexSettings t={key => en[key]} account={mounted.account} embedded accountOnly />)
     await expect.element(page.getByText(en.remoteOriginDescription, { exact: true })).toBeVisible()
-    await expect.element(page.getByText(`dsh plugin --profile web exec dsh-codex-connect trust-origin ${window.location.origin}`, { exact: true })).toBeVisible()
+    await expect.element(page.getByText(`dsh plugin --profile web exec dsh-chatgpt-connect trust-origin ${window.location.origin}`, { exact: true })).toBeVisible()
     await expect.element(page.getByRole('button', { name: en.remoteOriginCopy, exact: true })).toBeEnabled()
     await expect.element(page.getByText(en.desktopOriginDescription, { exact: true })).not.toBeInTheDocument()
   })

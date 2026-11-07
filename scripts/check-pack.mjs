@@ -24,7 +24,9 @@ if (result.status !== 0) {
 
 const [manifest] = JSON.parse(result.stdout)
 const names = manifest.files.map(file => file.path)
-const required = ['LICENSE', 'NOTICE', 'README.md', 'docs/README.zh.md', 'docs/reference.md', 'docs/reference.zh.md', 'docs/licenses/standalone-cli.txt', 'package.json', 'compatibility.json', 'cordis.patch.yml', 'lib/index.js', 'lib/index.d.ts', 'lib/client.js', 'lib/bin.js']
+// `docs/` 整体不随包发布（避免用户把上游逐版本发布史误认为本 fork 的版本）。
+// 例外：standalone CLI 的第三方许可文本必须随制品分发，故单独保留。
+const required = ['LICENSE', 'NOTICE', 'README.md', 'INSTALL.md', 'VERSIONING.md', 'MIGRATION.md', 'docs/licenses/standalone-cli.txt', 'package.json', 'compatibility.json', 'cordis.patch.yml', 'lib/index.js', 'lib/index.d.ts', 'lib/client.js', 'lib/bin.js']
 for (const name of required) {
   if (!names.includes(name)) throw new Error(`packed artifact is missing ${name}`)
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 describe('bundle defaults', () => {
   it('installs only its plugin row and leaves Harness routing unchanged', async () => {
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
-    expect(patch).toContain('name: dsh-codex-connect')
+    expect(patch).toContain('name: dsh-chatgpt-connect')
     expect(patch).toContain('enableProxy: false')
     expect(patch).toContain('enableSearch: false')
     expect(patch).toContain('enableReserveFallback: false')

@@ -22,7 +22,7 @@ describe('independent plugin versioning', () => {
     const result = await checkForOpenAICodexUpdate({ currentVersion, fetchImpl: fetchMock })
     expect(result).toMatchObject({
       status: 'update-available', currentVersion, latestVersion: '0.2.0-alpha.1',
-      releaseUrl: 'https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.1',
+      releaseUrl: 'https://github.com/yiyunet/dsh-chatgpt-connect/releases/tag/v0.2.0-alpha.1',
     })
     expect(parseOpenAICodexUpdateResult(result)).toEqual(result)
     expect(fetchMock).toHaveBeenCalledTimes(3)
@@ -64,9 +64,11 @@ describe('independent plugin versioning', () => {
     }
   })
 
-  it('includes both policy documents in the package configuration', async () => {
+  it('ships the policy documents but not the docs tree', async () => {
     const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as { files: string[] }
     expect(manifest.files).toContain('VERSIONING.md')
-    expect(manifest.files).toContain('docs')
+    // docs/ 是上游发布史（release-notes、agent-notes、experiments），随包发布会让用户
+    // 误以为本 fork 发的是上游那些版本。文档仍留在仓库，只是不进 npm 包。
+    expect(manifest.files).not.toContain('docs')
   })
 })

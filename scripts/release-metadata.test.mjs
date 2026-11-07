@@ -62,8 +62,8 @@ for (const [name, value] of [
 }
 
 const readmes = (version = '0.1.0-alpha.4.29', host = '0.1.2-rc.1') => [
-  `# Codex Connect\n\n[Install](INSTALL.md)\n\nNew introduction, badges, and reordered sections.\n\n[中文](docs/README.zh.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-codex-connect@${version}\n`,
-  `# Codex Connect\n\n[English](../README.md) | 中文\n\n[安装](../INSTALL.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-codex-connect@${version}\n`,
+  `# dsh-chatgpt-connect\n\n[Install](INSTALL.md)\n\nNew introduction, badges, and reordered sections.\n\n[中文](docs/README.zh.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-chatgpt-connect@${version}\n`,
+  `# dsh-chatgpt-connect\n\n[English](../README.md) | 中文\n\n[安装](../INSTALL.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-chatgpt-connect@${version}\n`,
 ]
 const compatibility = {
   schemaVersion: 1,
@@ -85,7 +85,7 @@ for (const [name, docs, catalog, candidate] of [
   ['different host', readmes('0.1.0-alpha.4.29', '0.1.2-rc.2'), compatibility, '0.1.0-alpha.4.29'],
   ['missing language', [readmes()[0]], compatibility, '0.1.0-alpha.4.29'],
   ['missing installation link', readmes().map(text => text.replace(/\(\.\.\/INSTALL.md\)|\(INSTALL.md\)/gu, '')), compatibility, '0.1.0-alpha.4.29'],
-  ['multiple install versions', readmes().map(text => text + '\ndsh plugin --profile web add dsh-codex-connect@0.1.0-alpha.4.28\n'), compatibility, '0.1.0-alpha.4.29'],
+  ['multiple install versions', readmes().map(text => text + '\ndsh plugin --profile web add dsh-chatgpt-connect@0.1.0-alpha.4.28\n'), compatibility, '0.1.0-alpha.4.29'],
   ['recommendation newer than candidate', readmes(), compatibility, '0.1.0-alpha.4.28'],
   ['replacement JSON format', readmes(), { '0.1.0-alpha.4.29': { verified_with: ['0.1.2-rc.1'] } }, '0.1.0-alpha.4.29'],
   ['malformed host list', readmes(), { ...compatibility, pluginVersions: [{ version: '0.1.0-alpha.4.29', verifiedDshVersions: '0.1.2-rc.1' }] }, '0.1.0-alpha.4.29'],

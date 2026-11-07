@@ -6,7 +6,9 @@ let versions: Record<string, string | undefined>
 beforeEach(() => {
   versions = { 'dsh-agent': '0.1.7-rc.1', 'dsh-agent-loop': '0.1.7-rc.1', 'dsh-tools': '0.1.7-rc.1' }
   read.mockReset().mockImplementation((filename: string) => {
-    const name = filename.split('/').at(-2)!
+    // 跨平台路径分隔：Windows 的 require.resolve 返回反斜杠，只切 '/' 会让 mock 恒报缺失，
+    // 于是每一条断言都在测「读不到元数据」而不是被测策略本身。
+    const name = filename.split(/[\\/]/u).at(-2)!
     if (versions[name] === undefined) throw new Error('metadata missing')
     return JSON.stringify({ name: '@deepseek-ai/' + name, version: versions[name] })
   })

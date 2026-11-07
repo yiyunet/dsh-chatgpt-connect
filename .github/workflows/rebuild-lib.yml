@@ -1,0 +1,50 @@
+name: Rebuild lib on Linux
+
+# 为什么需要它：`lib/` 里 bundle 了 @earendil-works/pi-ai、undici 等含平台条件分支的运行时依赖，
+# 于是在 Windows 上 `pnpm run build` 与在 Linux 上产出的字节不同，`Verify committed build output`
+# 必然在其中一个平台失败。CI 跑在 ubuntu 上，所以**提交进仓库的 lib/ 必须是 Linux 构建的**。
+# 本工作流只做一件事：在 ubuntu 上构建，把 lib/ 作为 artifact 交出来，供人工提交。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10.30.3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies from the lockfile
+        run: pnpm --config.minimum-release-age=0 install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Show what differs from the committed lib
+        run: git status --porcelain lib
+
+      - name: Upload the Linux build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lib-linux
+          path: lib
+          if-no-files-found: error
+          retention-days: 7

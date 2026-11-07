@@ -47,6 +47,15 @@ class SlotsFixture extends Service {
     super(ctx, 'slots')
   }
 
+  /** 真宿主的 slots 服务同时提供账本读取与订阅；「ANB 工具」壳守护依赖这两个方法。 */
+  entries(): SlotEntry[] {
+    return []
+  }
+
+  subscribe(_name: string, _listener: () => void): () => void {
+    return () => undefined
+  }
+
   inject(_name: string, callback: () => void): void {
     callback()
   }

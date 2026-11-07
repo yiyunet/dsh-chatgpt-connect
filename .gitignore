@@ -12,3 +12,7 @@ git-status.txt
 git-after.txt
 git-verify.txt
 build-label.txt
+
+# vitest browser-mode artifacts (local runs)
+.vitest-attachments/
+tests/browser/__screenshots__/

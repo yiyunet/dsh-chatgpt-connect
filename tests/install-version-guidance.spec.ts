@@ -66,7 +66,7 @@ describe('installation version guidance', () => {
       .not.toContain('0.2.1-rc.3')
   })
 
-  it('recommends published Alpha 12 while preserving the Alpha 11 host limit', () => {
+  it('recommends published Alpha 12 while preserving the Alpha 11 host limit', async () => {
     for (const guide of [install]) expect(guide).toContain('0.2.2-alpha.3')
     expect(install).toContain('**Published Alpha 12:**')
     expect(install).not.toContain('Alpha 12 candidate, not yet published')

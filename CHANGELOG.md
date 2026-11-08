@@ -23,6 +23,10 @@ Documentation and release-gate release. No runtime behaviour changed.
 - **Move the exact-version requirement from the README into `INSTALL.md`.** The release-gate check
   now requires one bare command in each README, one exact Alpha version in `INSTALL.md` that is not
   newer than the candidate, and a V1-shaped compatibility catalog.
+- **The gate now requires both language READMEs.** Handed a single document it returned no
+  failures, because every per-document rule still held for the one file supplied. The "missing
+  language" regression case therefore asserted on an empty list, threw at import time, and took
+  `pnpm run lint` down with it. Both documents must now be supplied together.
 
 ## 0.3.1-alpha.2 — 2026-11-08
 

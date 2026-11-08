@@ -59,7 +59,11 @@ export function validateUpdateHighlights(manifest, packageVersion) {
  */
 export function validateReadmeInstallation(readmes, compatibility, packageVersion, install) {
   const failures = []
-  for (const [index, text] of readmes.entries()) {
+  // 2026-11-08: both language READMEs must be present. A single document used to pass this gate
+  // silently — a false green, because every per-document rule it skipped was still satisfied by
+  // the one file supplied. The regression suite relies on a missing document being reported.
+  if (!Array.isArray(readmes) || readmes.length !== 2) failures.push('both language READMEs must be checked together')
+  for (const [index, text] of (Array.isArray(readmes) ? readmes : []).entries()) {
     const languageLink = index === 0 ? '(docs/README.zh.md)' : '(../README.md)'
     const installLink = index === 0 ? '(INSTALL.md)' : '(../INSTALL.md)'
     if (!/^# dsh-chatgpt-connect\s*$/mu.test(text) || !text.includes(languageLink) || !text.includes(installLink)) {

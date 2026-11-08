@@ -9,11 +9,7 @@ const shellBlocks = [...install.matchAll(/```sh\s*\n([\s\S]*?)```/gu)]
   .flatMap(match => (match[1] ?? '').split('\n').map(line => line.trim()))
 
 describe('installation version guidance', () => {
-  it.each(['0.2.1-alpha.4', '0.2.1-alpha.5', '0.2.1-rc.1'])('preserves the first published %s support in historical Alpha 5', async version => {
-    const [english, chinese] = await Promise.all([
-      readFile(new URL('../README.md', import.meta.url), 'utf8'),
-      readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8'),
-    ])
+  it.each(['0.2.1-alpha.4', '0.2.1-alpha.5', '0.2.1-rc.1'])('preserves the first published %s support in historical Alpha 5', version => {
     // Fork READMEs carry no upstream release history (2026-11-08 老板裁决):
     // the historical markers and per-release records live in INSTALL.md only.
     expect(install).toContain('Historical Alpha 5')

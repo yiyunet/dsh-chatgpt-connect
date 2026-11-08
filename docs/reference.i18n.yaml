@@ -1,4 +1,5 @@
 # Bilingual-pair consistency record for the operational reference. Re-record with:
-#   git hash-object docs/reference.md docs/reference.zh.md
-docs/reference.md: e7777316094072ffa5d00488cc560661387bf3ab
-docs/reference.zh.md: 0655c19a427af650de2004b0e62899952a4e7585
+#   git rev-parse :docs/reference.md :docs/reference.zh.md
+# Read the index blob: git hash-object would hash the CRLF worktree bytes instead.
+docs/reference.md: a9f533cfd01fd90b8dc8920d1e68fc7b98d3a142
+docs/reference.zh.md: 406a17090090d65e871687c6b7c20b9680ce5d33

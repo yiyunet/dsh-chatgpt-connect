@@ -4,7 +4,7 @@ This describes development builds containing the runtime-identity change. Older 
 
 ## Start with the running page
 
-In **Settings → Plugins → Codex Connect → Runtime identity**, one bounded, uncached same-origin read compares:
+In **Settings → ANB 工具 → ChatGPT Connect → Runtime identity**, one bounded, uncached same-origin read compares:
 
 - **This page's plugin**: the version embedded in the browser code, never copied from an update response.
 - **Host-loaded plugin**: the version embedded in the code answering the authenticated request.
@@ -40,7 +40,7 @@ Compatibility remains strict: `compatible` means the declared version tuple matc
 
 “运行身份”仅在包含本改动的开发构建中提供；旧发布包没有该卡片或回执时应视为未知，不应直接判断安装损坏。本改动不更换已发布推荐版本，也不扩大精确宿主支持集合。
 
-在 **设置 → 插件 → Codex Connect → 运行身份** 中分别核对页面自身编译版本、正在响应的 Host 插件编译版本、该插件磁盘清单版本和宿主启动时所选 DSH 安装元数据。DSH 主清单与三项诊断 API 必须一致；无安装锚点时不沿其他 profile、祖先目录、PATH 或可执行文件位置猜测。服务端要求当前 DSH 认证与 Origin 防护同时通过。失败重查会清除旧结果，未知不会伪装成一致。
+在 **设置 → ANB 工具 → ChatGPT Connect → 运行身份** 中分别核对页面自身编译版本、正在响应的 Host 插件编译版本、该插件磁盘清单版本和宿主启动时所选 DSH 安装元数据。DSH 主清单与三项诊断 API 必须一致；无安装锚点时不沿其他 profile、祖先目录、PATH 或可执行文件位置猜测。服务端要求当前 DSH 认证与 Origin 防护同时通过。失败重查会清除旧结果，未知不会伪装成一致。
 
 本次身份检查只做有期限、不缓存的同源读取；不请求账户/模型、不读 OAuth 内容、不安装依赖、不改配置、不刷新页面、不重启。相邻的既有账户控件仍会按原有行为查询登录状态/额度，不能因此声称整个设置页不访问凭据。版本声明一致不代表包字节、Desktop 主程序、实际模型权限或所有功能已经验收。仅页面不同可刷新；Host 与磁盘不同应先保存工作再正常重启。仅凭未知不得重装、降级、删除共享测试依赖或重启正常工作的应用。
 

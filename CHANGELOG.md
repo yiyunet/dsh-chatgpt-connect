@@ -4,6 +4,20 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.1-alpha.4 — 2026-11-08
+
+Settings-path fix. Two locale strings changed; no other runtime behaviour differs.
+
+- **The models card no longer sends users to a settings page this plugin does not appear on.**
+  It said **Settings → Plugins → ChatGPT Connect**, but the plugin is mounted under the ANB
+  tools shell instead, so that path led nowhere. Both languages now read
+  **Settings → ANB 工具 → ChatGPT Connect**, which is the path the README already documented.
+  The two client tests assert the locale constant itself rather than a copy of the text, so
+  they follow the change without edits.
+- **The same path is used in `INSTALL.md` and in `docs/auto-review.*`, `docs/reference.*` and
+  `docs/runtime-identity.md`.** The note in `INSTALL.md` about what upstream Alpha 4.25 offered
+  is left exactly as written: it records a past release, and rewriting it would falsify history.
+
 ## 0.3.1-alpha.3 — 2026-11-08
 
 Documentation and release-gate release. No runtime behaviour changed.

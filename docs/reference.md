@@ -92,7 +92,7 @@ Fresh installations register the model provider and leave every additional capab
     enableAutoReview: false
 ```
 
-Edit these options under **Settings → Plugins → Plugin configuration → Codex Connect** or **Settings → Models → Openai-Codex → More settings**. Changes are staged until **Save changes**. Saving commits edited fields together and preserves concurrent changes to untouched fields. A conflicting edit or failed save keeps your draft; discard it to reload the latest settings. Most settings affect only this plugin; enabling Codex Search also selects it as the active profile-wide search route.
+Edit these options under **Settings → ANB 工具 → ChatGPT Connect** or **Settings → Models → Openai-Codex → More settings**. Changes are staged until **Save changes**. Saving commits edited fields together and preserves concurrent changes to untouched fields. A conflicting edit or failed save keeps your draft; discard it to reload the latest settings. Most settings affect only this plugin; enabling Codex Search also selects it as the active profile-wide search route.
 
 ### Proxy
 

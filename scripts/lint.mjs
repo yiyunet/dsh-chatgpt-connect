@@ -45,13 +45,14 @@ if (!readme.includes('Use the image generation capability included with your cur
   failures.push('README must describe image generation with the approved subscription copy')
 }
 const chineseReadme = await readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8')
+const installGuide = await readFile(new URL('../INSTALL.md', import.meta.url), 'utf8')
 if (!chineseReadme.includes('使用你当前 GPT 订阅计划提供的图片生成能力。')) {
   failures.push('Chinese README must describe image generation with the approved subscription copy')
 }
 
 try {
   const compatibility = JSON.parse(await readFile(new URL('../verified-compatibility.json', import.meta.url), 'utf8'))
-  failures.push(...validateReadmeInstallation([readme, chineseReadme], compatibility, packageJson.version))
+  failures.push(...validateReadmeInstallation([readme, chineseReadme], compatibility, packageJson.version, installGuide))
 } catch {
   failures.push('verified-compatibility.json must be readable JSON')
 }

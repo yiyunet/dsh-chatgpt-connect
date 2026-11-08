@@ -16,22 +16,6 @@ English | [中文](docs/README.zh.md)
 [![license](https://img.shields.io/npm/l/dsh-chatgpt-connect?color=blue)](LICENSE)
 [![node](https://img.shields.io/node/v/dsh-chatgpt-connect)](package.json)
 
-## Contents
-
-1. [What this is and whether it works for you](#1-what-this-is-and-whether-it-works-for-you)
-2. [What you need before installing](#2-what-you-need-before-installing)
-3. [Install](#3-install) · [uninstall](#uninstall-and-what-it-leaves-behind)
-4. [Quick start: finish one real task](#4-quick-start-finish-one-real-task)
-5. [Daily use](#5-daily-use)
-6. [Settings panel](#6-settings-panel)
-7. [Problems and next steps](#7-problems-and-next-steps)
-8. [Update, roll back, uninstall](#8-update-roll-back-uninstall)
-9. [Data, permissions and privacy](#9-data-permissions-and-privacy)
-10. [Compatibility: required, verified, unconfirmed](#10-compatibility-required-verified-unconfirmed)
-11. [Documentation and development](#11-documentation-and-development)
-12. [Feedback](#12-feedback)
-13. [Licence and provenance](#13-licence-and-provenance)
-
 ## 1. What this is and whether it works for you
 
 `dsh-chatgpt-connect` adds one provider, `openai-codex`, to Harness. Harness keeps managing tools,
@@ -39,8 +23,8 @@ permissions, approvals, attachments, sessions, compaction and recovery; this plu
 model connection and an optional image lane. Installing it does not change your default model or search
 route, and it does not turn a ChatGPT subscription into an OpenAI Platform API key.
 
-**Current state.** Published on npm as the `alpha` channel, latest release `0.3.1-alpha.2` (2026-11-08).
-It runs; it is not a finished product. Pick the exact version — see [Install](#3-install).
+**Current state.** Published on npm and installable through the `alpha` channel. It runs; it is not a
+finished product. See [Install](#3-install).
 
 Four different kinds of limit, stated separately because they need different reactions:
 
@@ -57,7 +41,7 @@ Four different kinds of limit, stated separately because they need different rea
 
 | Requirement | Value |
 |---|---|
-| DeepSeek Harness | `>=0.1.7-rc.1 <0.3.0`. Reported `compatible` only on this release's verified hosts: `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5`, `0.2.2-alpha.3`. Other hosts inside the range report `unverified`. |
+| DeepSeek Harness | `>=0.1.7-rc.1 <0.3.0`. Inside that range the plugin loads. Whether a given host is reported `compatible` or `unverified` is a separate, recorded verdict — not an admission gate. The current verified list is in [compatibility.json](compatibility.json); this README deliberately does not copy it, so a Harness update inside the range needs no README change. |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
 | Account | A ChatGPT account whose subscription can reach the model you want, authorized through the browser during setup |
 | Profile | A Harness *profile* is a named configuration (for example `web`). The plugin installs into one profile and only appears there. |
@@ -69,16 +53,16 @@ A moving npm tag is not a compatibility guarantee. Do not upgrade or downgrade H
 Run this where you normally run Harness, replacing `web` with your profile name:
 
 ```sh
-dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.2
-dsh web
+dsh plugin --profile web add dsh-chatgpt-connect
 ```
 
-The plugin takes effect when you next start that profile — `dsh web` above. It does not change your
-default model; selecting one is the next step.
+The plugin loads the next time DSH starts. It does not change your default model or search route; selecting a
+model is the next step.
 
-Always pass the exact version. npm's `latest` tag still points at a `0.0.0` name-reservation placeholder, so
-an unpinned install cannot run. If you build Harness from a source checkout, prefix the same commands with
-`pnpm`. Other routes and the full host table are in [INSTALL.md](INSTALL.md).
+The command names the package, not a version, so publishing does not require editing this file. npm resolves it
+through the package's `latest` tag. If your registry is a mirror that lags behind, or you need to pin a version
+for a rollout, use the exact command in [INSTALL.md](INSTALL.md). From a DSH source checkout, prefix the command
+with `pnpm`.
 
 **Removing it:** see [Uninstall](#uninstall-and-what-it-leaves-behind). Uninstalling does not sign you out
 or delete your credentials — that is a separate, deliberate action.
@@ -102,14 +86,13 @@ the plugin loaded; it says nothing about whether a model answered. The four step
 
 ## 5. Daily use
 
-**Main line, end to end.** Start the profile (`dsh web`) → open or create a session → pick an
-`openai-codex` model in the composer → work normally (ask, attach files, approve tool calls) → read the
-answer in the session, where images also land if you enabled generation.
+**Main line, end to end.** In DSH, open or create a session → pick an `openai-codex` model in the composer →
+work normally (ask, attach files, approve tool calls) → read the answer in the session, where images also land
+if you enabled generation.
 
-**Shortest path from the second time on.** `dsh web` → pick the model → ask. Nothing needs re-authorizing
-and no setting needs re-applying; the account selection and every toggle persist. If you always want the
-same model, your profile's default model covers the picker step, so it collapses to *start the session and
-ask*.
+**Shortest path from the second time on.** Open a session → pick the model → ask. There is no restart and
+nothing to re-authorize; the account selection and every toggle persist. If you always want the same model,
+your profile's default model covers the picker step, so it collapses to *open a session and ask*.
 
 Things that do change state, so you are not surprised:
 
@@ -143,6 +126,15 @@ Every capability toggle with its effect and default:
 | `enableImageGeneration` | Generate images from a prompt, or edit selected conversation images with ordered references. Also bridges image handles to non-Codex routes. | **off** |
 | `enableAutoReview` | Sends bounded approval context to `chatgpt.com` for a second opinion; it changes *who reviews*, not what Harness permits. | **off** |
 | `enableQuotaTool` | Registers the read-only `codex_connect_quota` tool. Reload the plugin after changing it. | **off** |
+
+**Proxy.** Off by default — this plugin connects directly. To route only this plugin's traffic through an
+HTTP(S) proxy: **More settings → Proxy configuration method**, then either **Detect proxy** (scans common
+local proxy ports and environment variables without changing the saved connection) or **Configure manually**
+and enter a proxy origin with no credentials, path, query or fragment. Press **Test proxy** — activation
+requires a **successful test of that exact address**, and the result reports the HTTP status it reached.
+Only then can you save, and the panel states what will change ("After saving, ChatGPT Connect will use
+<address>"). **Disable proxy** returns to a direct connection. A failed test, or a saved proxy that can no
+longer reach the endpoint, leaves you on the direct path — this plugin never retries a failed proxy silently.
 
 Use the image generation capability included with your current GPT subscription. Successful images appear
 below the answer in the conversation; generated originals are stored separately from attachment previews, so
@@ -276,10 +268,3 @@ upstream copyrights are retained. It is not affiliated with, sponsored by, or en
 Codex, DeepSeek, or DeepSeek Harness.
 
 The published artifact carries a SLSA provenance attestation naming the commit and workflow that built it.
-
-### Upstream and this fork
-
-This package is `dsh-chatgpt-connect`. Its ancestor is a **different npm package**, `dsh-codex-connect`,
-published upstream; installing that one does not install this fork, and this fork does not inherit its
-release history. The per-release historical record — older host pairings, dates, and what each older release
-changed — lives in [INSTALL.md](INSTALL.md) and `docs/release-notes/` in the repository, not here.

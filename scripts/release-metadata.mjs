@@ -50,38 +50,37 @@ export function validateUpdateHighlights(manifest, packageVersion) {
   return failures
 }
 
-/** Check bilingual installation facts without fixing prose order or equating a candidate with a published release. */
-export function validateReadmeInstallation(readmes, compatibility, packageVersion) {
+/**
+ * Check bilingual installation guidance.
+ *
+ * 2026-11-08 老板裁决：README 写**裸包名**（不带版本号、不带 tag），这样发版不必改 README。
+ * 代偿：把「必须推荐一个精确且不超前于候选的版本」这条保护从 README **移到 INSTALL.md**
+ * （运行手册，本来就随版本更新），由第四个参数显式传入 —— 不再从 README 里猜。
+ */
+export function validateReadmeInstallation(readmes, compatibility, packageVersion, install) {
   const failures = []
-  const versions = []
   for (const [index, text] of readmes.entries()) {
     const languageLink = index === 0 ? '(docs/README.zh.md)' : '(../README.md)'
     const installLink = index === 0 ? '(INSTALL.md)' : '(../INSTALL.md)'
     if (!/^# dsh-chatgpt-connect\s*$/mu.test(text) || !text.includes(languageLink) || !text.includes(installLink)) {
       failures.push('each README must include the product title, other language, and installation guide links')
     }
-    const commands = [...text.matchAll(/\bdsh plugin --profile [\w-]+ add dsh-chatgpt-connect@([^\s`]+)/gu)]
-    const distinct = [...new Set(commands.map(match => match[1]))]
-    if (distinct.length !== 1 || !isAlphaReleaseVersion(distinct[0])) {
-      failures.push('each README must recommend one exact Alpha version, not a moving tag or build identifier')
+    const commands = [...text.matchAll(/\bdsh plugin --profile [\w-]+ add dsh-chatgpt-connect(@[^\s`]*)?/gu)]
+    const targets = [...new Set(commands.map(match => match[1] ?? ''))]
+    if (commands.length !== 1 || targets[0] !== '') {
+      failures.push('each README must show exactly one installation command for the bare package name, with no tag and no version')
     }
-    versions.push(distinct[0])
   }
-  if (readmes.length !== 2 || versions[0] !== versions[1]) {
-    failures.push('English and Chinese README installation versions must match')
+  const exact = [...String(install ?? '').matchAll(/\bdsh plugin --profile [\w-]+ add dsh-chatgpt-connect@([^\s`]+)/gu)]
+    .map(match => match[1])
+  const distinctExact = [...new Set(exact)]
+  if (distinctExact.length !== 1 || !isAlphaReleaseVersion(distinctExact[0])) {
+    failures.push('INSTALL.md must recommend exactly one exact Alpha version')
+  } else if (isAlphaReleaseVersion(packageVersion) && compareAlphaVersions(distinctExact[0], packageVersion) > 0) {
+    failures.push('INSTALL.md installation version must not be newer than the candidate package')
   }
-  const version = versions[0]
-  if (isAlphaReleaseVersion(version)) {
-    if (isAlphaReleaseVersion(packageVersion) && compareAlphaVersions(version, packageVersion) > 0) {
-      failures.push('README installation version must not be newer than the candidate package')
-    }
-    const pairing = compatibility?.schemaVersion === 1 && Array.isArray(compatibility.pluginVersions)
-      ? compatibility.pluginVersions.find(entry => entry?.version === version)
-      : undefined
-    const commonHost = Array.isArray(pairing?.verifiedDshVersions) && pairing.verifiedDshVersions.some(host => (
-      typeof host === 'string' && host.length > 0 && readmes.every(text => text.includes(`\`${host}\``))
-    ))
-    if (!commonHost) failures.push('README installation must show the same recorded, verified DSH/plugin pair in both languages')
+  if (compatibility?.schemaVersion !== 1 || !Array.isArray(compatibility.pluginVersions) || compatibility.pluginVersions.length === 0) {
+    failures.push('verified-compatibility.json must keep its recorded V1 shape')
   }
   return failures
 }

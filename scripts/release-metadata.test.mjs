@@ -61,9 +61,11 @@ for (const [name, value] of [
   check(`reject ${name}`, () => assert.notEqual(validateUpdateHighlights(value, '0.1.0-alpha.4.29').length, 0))
 }
 
-const readmes = (version = '0.1.0-alpha.4.29', host = '0.1.2-rc.1') => [
-  `# dsh-chatgpt-connect\n\n[Install](INSTALL.md)\n\nNew introduction, badges, and reordered sections.\n\n[中文](docs/README.zh.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-chatgpt-connect@${version}\n`,
-  `# dsh-chatgpt-connect\n\n[English](../README.md) | 中文\n\n[安装](../INSTALL.md)\n\nDSH \`${host}\`\n\ndsh plugin --profile web add dsh-chatgpt-connect@${version}\n`,
+// 2026-11-08 老板裁决：README 只给裸包名；精确版本改由 INSTALL.md 承担。
+const installs = (version = '0.1.0-alpha.4.29') => `# Install\n\ndsh plugin --profile web add dsh-chatgpt-connect@${version}\n`
+const readmes = () => [
+  `# dsh-chatgpt-connect\n\n[Install](INSTALL.md)\n\nNew introduction, badges, and reordered sections.\n\n[中文](docs/README.zh.md)\n\ndsh plugin --profile web add dsh-chatgpt-connect\n`,
+  `# dsh-chatgpt-connect\n\n[English](../README.md) | 中文\n\n[安装](../INSTALL.md)\n\ndsh plugin --profile web add dsh-chatgpt-connect\n`,
 ]
 const compatibility = {
   schemaVersion: 1,
@@ -71,26 +73,24 @@ const compatibility = {
   latestDshVersion: '0.1.2-rc.1',
   pluginVersions: [{ version: '0.1.0-alpha.4.29', verifiedDshVersions: ['0.1.2-rc.1'] }],
 }
-check('README may keep the previous recommendation while a newer candidate is prepared', () => {
-  assert.deepEqual(validateReadmeInstallation(readmes(), compatibility, '0.1.0-alpha.4.30'), [])
+check('README publishes without a version while a newer candidate is prepared', () => {
+  assert.deepEqual(validateReadmeInstallation(readmes(), compatibility, '0.1.0-alpha.4.30', installs()), [])
 })
 check('README prose and section order are not release invariants', () => {
-  assert.deepEqual(validateReadmeInstallation(readmes(), compatibility, '0.1.0-alpha.4.29'), [])
+  assert.deepEqual(validateReadmeInstallation(readmes(), compatibility, '0.1.0-alpha.4.29', installs()), [])
 })
-for (const [name, docs, catalog, candidate] of [
-  ['language mismatch', [readmes()[0], readmes('0.1.0-alpha.4.28')[1]], compatibility, '0.1.0-alpha.4.29'],
-  ['moving tag', readmes('alpha'), compatibility, '0.1.0-alpha.4.29'],
-  ['build counter', readmes('0.1.2-rc.1+build.0'), compatibility, '0.1.0-alpha.4.29'],
-  ['unverified version', readmes('0.1.0-alpha.4.30'), compatibility, '0.1.0-alpha.4.30'],
-  ['different host', readmes('0.1.0-alpha.4.29', '0.1.2-rc.2'), compatibility, '0.1.0-alpha.4.29'],
-  ['missing language', [readmes()[0]], compatibility, '0.1.0-alpha.4.29'],
-  ['missing installation link', readmes().map(text => text.replace(/\(\.\.\/INSTALL.md\)|\(INSTALL.md\)/gu, '')), compatibility, '0.1.0-alpha.4.29'],
-  ['multiple install versions', readmes().map(text => text + '\ndsh plugin --profile web add dsh-chatgpt-connect@0.1.0-alpha.4.28\n'), compatibility, '0.1.0-alpha.4.29'],
-  ['recommendation newer than candidate', readmes(), compatibility, '0.1.0-alpha.4.28'],
-  ['replacement JSON format', readmes(), { '0.1.0-alpha.4.29': { verified_with: ['0.1.2-rc.1'] } }, '0.1.0-alpha.4.29'],
-  ['malformed host list', readmes(), { ...compatibility, pluginVersions: [{ version: '0.1.0-alpha.4.29', verifiedDshVersions: '0.1.2-rc.1' }] }, '0.1.0-alpha.4.29'],
+for (const [name, docs, catalog, candidate, install] of [
+  ['missing language', [readmes()[0]], compatibility, '0.1.0-alpha.4.29', installs()],
+  ['missing installation link', readmes().map(text => text.replace(/\(\.\.\/INSTALL.md\)|\(INSTALL.md\)/gu, '')), compatibility, '0.1.0-alpha.4.29', installs()],
+  ['moving tag in README', readmes().map(text => text.replace('add dsh-chatgpt-connect\n', 'add dsh-chatgpt-connect@alpha\n')), compatibility, '0.1.0-alpha.4.29', installs()],
+  ['pinned version in README', readmes().map(text => text.replace('add dsh-chatgpt-connect\n', 'add dsh-chatgpt-connect@0.1.0-alpha.4.29\n')), compatibility, '0.1.0-alpha.4.29', installs()],
+  ['multiple install commands', readmes().map(text => text + '\ndsh plugin --profile web add dsh-chatgpt-connect\n'), compatibility, '0.1.0-alpha.4.29', installs()],
+  ['INSTALL without an exact version', readmes(), compatibility, '0.1.0-alpha.4.29', installs('alpha')],
+  ['INSTALL newer than candidate', readmes(), compatibility, '0.1.0-alpha.4.28', installs('0.1.0-alpha.4.29')],
+  ['replacement JSON format', readmes(), { '0.1.0-alpha.4.29': { verified_with: ['0.1.2-rc.1'] } }, '0.1.0-alpha.4.29', installs()],
+  ['malformed catalog', readmes(), { ...compatibility, pluginVersions: 'x' }, '0.1.0-alpha.4.29', installs()],
 ]) {
-  check(`reject ${name}`, () => assert.notEqual(validateReadmeInstallation(docs, catalog, candidate).length, 0))
+  check(`reject ${name}`, () => assert.notEqual(validateReadmeInstallation(docs, catalog, candidate, install).length, 0))
 }
 
 process.stdout.write(`release metadata: ${cases} regression cases passed\n`)

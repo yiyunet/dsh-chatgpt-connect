@@ -17,7 +17,7 @@ describe('installation version guidance', () => {
     // Fork READMEs carry no upstream release history (2026-11-08 老板裁决):
     // the historical markers and per-release records live in INSTALL.md only.
     expect(install).toContain('Historical Alpha 5')
-    for (const guide of [english, chinese, install]) expect(guide).toContain(`\`${version}\``)
+    for (const guide of [install]) expect(guide).toContain(`\`${version}\``)
     const firstAlpha5 = compatibility.pluginVersions.findIndex((entry: { version: string }) => entry.version === '0.2.0-alpha.5')
     expect(firstAlpha5).toBeGreaterThanOrEqual(0)
     expect(compatibility.pluginVersions.slice(0, firstAlpha5)
@@ -70,10 +70,8 @@ describe('installation version guidance', () => {
       .not.toContain('0.2.1-rc.3')
   })
 
-  it('recommends published Alpha 12 while preserving the Alpha 11 host limit', async () => {
-    const guides = await Promise.all([readFile(new URL('../README.md', import.meta.url), 'utf8'),
-      readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8')])
-    for (const guide of [...guides, install]) expect(guide).toContain('0.2.2-alpha.3')
+  it('recommends published Alpha 12 while preserving the Alpha 11 host limit', () => {
+    for (const guide of [install]) expect(guide).toContain('0.2.2-alpha.3')
     expect(install).toContain('**Published Alpha 12:**')
     expect(install).not.toContain('Alpha 12 candidate, not yet published')
     const declared = JSON.parse(await readFile(new URL('../compatibility.json', import.meta.url), 'utf8'))
@@ -139,6 +137,9 @@ describe('installation version guidance', () => {
     expect(install).toContain('dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12')
     for (const guide of [english, chinese]) {
       expect(guide).toContain('`latest`')
+    }
+    // 宿主清单不再复制进 README（2026-11-08 老板裁决：README 只写有界区间）。
+    for (const guide of [install]) {
       expect(guide).toContain('`0.1.7-rc.1`')
       expect(guide).toContain('`0.1.7-rc.2`')
       expect(guide).toContain('`0.2.0-rc.1`')

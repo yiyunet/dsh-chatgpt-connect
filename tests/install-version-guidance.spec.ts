@@ -14,8 +14,8 @@ describe('installation version guidance', () => {
       readFile(new URL('../README.md', import.meta.url), 'utf8'),
       readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8'),
     ])
-    expect(english).toContain('**Historical maintenance release:**')
-    expect(chinese).toContain('**历史维护版本：**')
+    // Fork READMEs carry no upstream release history (2026-11-08 老板裁决):
+    // the historical markers and per-release records live in INSTALL.md only.
     expect(install).toContain('Historical Alpha 5')
     for (const guide of [english, chinese, install]) expect(guide).toContain(`\`${version}\``)
     const firstAlpha5 = compatibility.pluginVersions.findIndex((entry: { version: string }) => entry.version === '0.2.0-alpha.5')
@@ -52,15 +52,20 @@ describe('installation version guidance', () => {
   it('recommends the verified Alpha 12 release without rewriting historical Alpha 10 and Alpha 9 pairings', async () => {
     const guides = await Promise.all([readFile(new URL('../README.md', import.meta.url), 'utf8'),
       readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8')])
-    for (const guide of [...guides, install]) {
+    // Upstream release history lives in INSTALL.md only (2026-11-08 老板裁决).
+    for (const guide of [install]) {
       expect(guide).toContain('`0.2.0-alpha.12`')
       expect(guide).toContain('`0.2.1-rc.5`')
       expect(guide).toContain('`0.2.0-alpha.10`')
       expect(guide).toContain('`0.2.1-rc.3`')
       expect(guide).toContain('dsh-codex-connect@0.2.0-alpha.12')
+    }
+    for (const guide of [...guides, install]) {
       expect(guide).not.toContain('Source candidate (unreleased)')
       expect(guide).not.toContain('源码候选（尚未发布）')
     }
+    // A fork README must never hand out the upstream package's install command.
+    for (const guide of guides) expect(guide).not.toContain('dsh plugin --profile web add dsh-codex-connect@')
     expect(compatibility.pluginVersions.find((entry: { version: string }) => entry.version === '0.2.0-alpha.9')?.verifiedDshVersions)
       .not.toContain('0.2.1-rc.3')
   })
@@ -131,8 +136,8 @@ describe('installation version guidance', () => {
       readFile(new URL('../README.md', import.meta.url), 'utf8'),
       readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8'),
     ])
+    expect(install).toContain('dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12')
     for (const guide of [english, chinese]) {
-      expect(guide).toContain('dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12')
       expect(guide).toContain('`latest`')
       expect(guide).toContain('`0.1.7-rc.1`')
       expect(guide).toContain('`0.1.7-rc.2`')
@@ -149,8 +154,6 @@ describe('installation version guidance', () => {
     expect(chinese).toContain('旧 `enableReserveFallback` 开关会被忽略')
     expect(chinese).toContain('不读取、迁移或删除')
     expect(install).toContain('Channel snapshot on 2026-11-04: npm `alpha` points to `0.2.0-alpha.12`; `latest` remains `0.2.0-alpha.10`')
-    expect(english).toContain('As of 2026-11-04, npm `alpha` points to `0.2.0-alpha.12`, while `latest` remains `0.2.0-alpha.10`')
-    expect(chinese).toContain('截至 2026-11-04，npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`')
     expect(install).toContain('Stock rc.1 keeps Task controls paused')
     expect(install).toContain('Luna Reserve has been removed')
   })
@@ -160,13 +163,7 @@ describe('installation version guidance', () => {
       readFile(new URL('../README.md', import.meta.url), 'utf8'),
       readFile(new URL('../docs/README.zh.md', import.meta.url), 'utf8'),
     ])
-    expect(english).toContain('Only the historical `0.2.0-alpha.3` client was compared with that local adaptation and found to differ only by the package-version string')
-    expect(english).toContain('does not establish `0.2.0-alpha.4` Desktop or live-account acceptance')
-    expect(english).toContain('nor acceptance of later npm artifacts')
     expect(english).not.toContain('The released client differs only by the package-version string')
-    expect(chinese).toContain('仅历史 `0.2.0-alpha.3` 客户端与该本地适配包进行了比较，确认只差包版本字符串')
-    expect(chinese).toContain('不代表 `0.2.0-alpha.4` 的 Desktop 或真实账户验收')
-    expect(chinese).toContain('也不代表后续 npm 安装包的验收')
     expect(chinese).not.toContain('发布客户端与该客户端仅版本字符串不同')
     expect(install).toContain('On 2026-10-10 the maintainer reported successful login and normal use')
     expect(install).toContain('not independent live-account verification of a later npm artifact')

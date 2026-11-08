@@ -2,145 +2,214 @@
 
 ![ChatGPT Connect —— 把你的 ChatGPT 订阅接进 DeepSeek Harness](https://raw.githubusercontent.com/yiyunet/dsh-chatgpt-connect/main/assets/hero.svg)
 
+**把你已经在付费的 ChatGPT 订阅，用在 DeepSeek Harness 里。** 如果你在 Harness 里干活、却因为付费模型在别处而另开一个应用问问题，
+这个插件把那些模型放进 Harness 常规的模型选择器，让同一个会话保留对话、工具与附件。
+
+Apache-2.0 · 独立社区 Alpha · **与 OpenAI、ChatGPT、Codex、DeepSeek、DeepSeek Harness 均无隶属关系**，亦未获其赞助或背书 ·
+[安全与权限](#9-数据权限与隐私) · [卸载与残留](#卸载与残留什么)
+
+[English](../README.md) | 中文
+
 [![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 [![license](https://img.shields.io/npm/l/dsh-chatgpt-connect?color=blue)](../LICENSE)
 [![node](https://img.shields.io/node/v/dsh-chatgpt-connect)](../package.json)
 
-[English](../README.md) | 中文
+## 目录
 
-通过 OAuth 把你的 ChatGPT 订阅接入 DeepSeek Harness：在常规 Harness agent loop 中使用 Codex 模型，并提供可选的 GPT Image 图片生成与编辑、**仅作用于本插件流量的可选 HTTP(S) 代理**、由用户控制的默认设置、Harness 原生审批、额度显示、诊断与可靠的会话恢复。
+1. [这是什么，适不适合你](#1-这是什么适不适合你)
+2. [安装前需要准备什么](#2-安装前需要准备什么)
+3. [安装](#3-安装) · [卸载](#卸载与残留什么)
+4. [快速开始：完成一次真实任务](#4-快速开始完成一次真实任务)
+5. [日常使用](#5-日常使用)
+6. [设置面板](#6-设置面板)
+7. [出问题时怎么办](#7-出问题时怎么办)
+8. [更新、回滚、卸载](#8-更新回滚卸载)
+9. [数据、权限与隐私](#9-数据权限与隐私)
+10. [兼容性：要求、已验证、仍未确认](#10-兼容性要求已验证仍未确认)
+11. [文档与开发](#11-文档与开发)
+12. [反馈](#12-反馈)
+13. [许可与来源](#13-许可与来源)
 
-社区 Alpha 项目。本项目独立维护，**与 OpenAI、ChatGPT、Codex、DeepSeek 或 DeepSeek Harness 不存在隶属关系，也未获得其赞助或背书。**
+## 1. 这是什么，适不适合你
 
-**本分支状态 —— 版本 `0.3.1-alpha.2`，已于 2026-11-07 通过 Trusted Publishing 发布到 npm 的 `alpha` 标签。** 它是 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect) 的自维护分支，后者又派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex)。包名与 CLI 名均为 `dsh-chatgpt-connect`；设置面板标题为 **ChatGPT Connect**。上游自己的发布记录原样保留在本文末尾，仍使用旧包名。
+`dsh-chatgpt-connect` 只做一件事：往 Harness 里加一个 `openai-codex` 提供方。工具、权限、审批、附件、会话、压缩与恢复继续由
+Harness 管理；插件只提供模型连接和一条可选的图片通道。安装它不会改变你的默认模型或搜索路由，也不会把 ChatGPT 订阅变成
+OpenAI Platform API Key。
 
-本分支相对上游的改动：
+**当前状态。** 以 npm `alpha` 渠道发布，最新版本 `0.3.1-alpha.2`（2026-11-08）。能用，但不是成品。请安装精确版本，
+见[安装](#3-安装)。
 
-- **准入与已验证分离**：包声明有界宿主区间，区间内的 DSH 更新不再拒载；只有维护者实测过的版本才报告 `compatible`，区间内其余版本一律报告 `unverified`，不声称可用。可用性由声明区间决定，可信度由已验证清单决定。
-- **包名、CLI 名与仓库名统一**：包名与 CLI 名为 `dsh-chatgpt-connect`；设置面板标题为 `ChatGPT Connect`，中文语种下 ANB 工具选项卡显示「ChatGPT连接」。
-- **面板内的更新检查在本分支关闭**：面板显示无法取得更新信息，关闭期间不发起任何网络请求。升级请通过插件管理器进行，不要依赖该面板。
-- **Windows 验收通道可用**：native-compaction 验收脚本不再在 Windows 上套用 POSIX 专属的权限与归属检查；POSIX 行为不变。
+四类限制分开写，因为它们需要完全不同的反应：
 
-Codex Connect 为标准 Harness agent loop 添加 `openai-codex` 模型提供方。工具、权限、审批、附件、会话持久化、压缩与恢复继续由 Harness 管理。安装插件不会改变默认模型或搜索路由，也不会把 ChatGPT 订阅变成 OpenAI Platform API Key。
+- **尚未实现**：Codex Sol 的 Ultra 编排、桌面 Computer Use 执行器，本插件里没有。
+- **已实现但默认关闭**：代理、搜索接管、图片查看、图片生成、自动审查、额度工具，全新安装时全部关闭，需在设置面板逐项开启。
+- **需要你未必拥有的权限**：模型可用性、额度与服务档位由 OpenAI 决定。模型出现在列表里，不代表你的账户能用它。
+- **存在但未验证**：十五个宿主的安装矩阵是**无凭据安装 + `doctor` 回归**，不代表真实 OAuth 流程、真实模型调用、真实图片编辑，
+  也不代表真实 Desktop 会话。
 
-## 前置要求
+## 2. 安装前需要准备什么
 
 | 要求 | 取值 |
 |---|---|
-| 插件 | `dsh-chatgpt-connect@0.3.1-alpha.2` |
-| DeepSeek Harness | 声明区间 `>=0.1.7-rc.1 <0.3.0`。本版本仅在实测过的十五个宿主上报告 `compatible`：`0.1.7-rc.1`、`0.1.7-rc.2`、`0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`、`0.2.1-rc.4`、`0.2.1-rc.5`、`0.2.2-alpha.3`。区间内其余宿主一律报告 `unverified`，不声称可用。 |
+| DeepSeek Harness | `>=0.1.7-rc.1 <0.3.0`。本版本仅在下列已验证宿主上报告 `compatible`：`0.1.7-rc.1`、`0.1.7-rc.2`、`0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`、`0.2.1-rc.4`、`0.2.1-rc.5`、`0.2.2-alpha.3`。区间内其余宿主报告 `unverified`。 |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
-| 账户 | 通过 ChatGPT OAuth 使用所请求的 Codex 模型；可用性由 OpenAI 决定 |
+| 账户 | 一个能访问你所需模型的 ChatGPT 账户，安装过程中通过浏览器完成授权 |
+| Profile | Harness 的 *profile* 是一套命名配置（例如 `web`）。插件装进某一个 profile，也只在该 profile 里出现。 |
 
-本版本记录的精确组合见 [compatibility.json](../compatibility.json)，其中 `latestDshVersion` 为 `0.2.2-alpha.3`。已验证清单中没有某个宿主，只表示该组合尚未验证，不表示已知不可运行。不要根据旧组合推断新版宿主支持，也不要为了凑上某一行而升级或降级 Harness。
+会移动的 npm tag 不代表兼容性保证。不要为了凑上某一行而升级或降级 Harness。
 
-## 快速开始
+## 3. 安装
 
-### 1. 安装
+在你平时运行 Harness 的地方执行，把 `web` 换成你的 profile 名：
 
 ```sh
 dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.2
 dsh web
 ```
 
-将 `web` 替换为正在使用的 profile 名，启动 Harness 时也使用同一个 profile。从 DSH 源码 checkout 执行时，请在命令前加 `pnpm`。
+插件在你**下次启动该 profile** 时生效，即上面的 `dsh web`。它不会改变你的默认模型 —— 选模型是下一步。
 
-必须带精确版本号：npm 的 `latest` 标签仍指向仅用于保留包名的 `0.0.0` 占位包，不带版本号会装到无法运行的包；`alpha` 是本分支唯一发布渠道，会移动的 tag 不保证其他宿主的兼容性。其他 profile 用法与完整安装检查见 [INSTALL.md](../INSTALL.md)。
+必须带精确版本号：npm 的 `latest` 标签仍指向 `0.0.0` 占位包，不带版本号会装到无法运行的包。如果你从源码检出运行 Harness，
+在同一条命令前加 `pnpm`。其他安装路线与完整宿主表见 [INSTALL.md](../INSTALL.md)。
 
-### 2. 授权并选择模型
+**想撤掉它**：见[卸载与残留](#卸载与残留什么)。卸载**不等于**退出登录，也不会删除凭据 —— 那是另一个需要你明确执行的动作。
 
-打开 **设置 → 模型 → Openai-Codex → 授权**，然后亲自在浏览器中完成批准。如果内嵌窗口被拦截，请用 **打开 ChatGPT 登录页面**。在 Harness 的常规模型选择器中选择一个 `openai-codex` 模型。
+## 4. 快速开始：完成一次真实任务
 
-不要把授权 URL、code、token 或账户标识粘贴到 issue、日志、聊天或配置文件中。在另一台设备上使用浏览器时，可通过可选的手动回调表单完成当前登录，无需转发 localhost 回调端口；请遵循[远程浏览器授权](reference.zh.md#远程浏览器授权)说明。
+安装成功不等于任务成功。设置里出现入口、或 `doctor` 通过，只能证明插件加载了，无法说明模型是否回答。下面四步的落点是一次真实回答。
 
-### 3. 检查安装
+1. **给什么输入** —— 一个你确实想得到答案的问题，在新建的 Harness 会话里输入（例如：*讲讲这个仓库的发布工作流做了什么*）。
+2. **做什么操作** —— 打开输入框的模型选择器，选一个 `openai-codex` 模型，发送。若选择器里没有 `openai-codex`，说明账户尚未授权：
+   打开 **设置 → ANB 工具 → ChatGPT连接 → 授权**，在浏览器完成批准后再选一次模型。
+3. **结果出现在哪** —— 就是该会话里正常的助手回答。工具审批、文件改动、附件行为与其他模型一致。
+4. **怎样判断符合预期** —— 你得到了针对该问题的文字回答，没有红色错误块，也没有附加 `overloaded` / `401` 一类诊断。
+   若报错，去[出问题时怎么办](#7-出问题时怎么办)；若拿到了回答但想知道这次请求消耗了什么，看设置面板里的额度分区。
 
-若要求诊断不经过包管理器，请直接运行已经安装的 bin（替换为已经独立识别的实际路径）：
+## 5. 日常使用
+
+**主线，端到端。** 启动 profile（`dsh web`）→ 打开或新建会话 → 在输入框选一个 `openai-codex` 模型 → 正常干活（提问、挂附件、审批工具调用）
+→ 在会话里读回答；若开启了图片生成，图片也出现在同一处。
+
+**第二次及以后的最短路径。** `dsh web` → 选模型 → 提问。不需要重新授权，也不需要重新应用任何设置；账户选择与每一个开关都会保留。
+若你长期只用同一个模型，把它设成 profile 的默认模型即可省掉选择器那一步，于是整条路径收敛为「开会话，直接问」。
+
+几种**会改变状态**的情况，先说清免得意外：
+
+- **账户** —— 切换账户只影响**后续**请求，不影响已经开始的对话；每个请求保留它捕获时使用的账户。插件不会自动轮换或静默故障切换。
+- **Fast Mode** 与单次对话的速度选择是**会话级**的。
+- **附件与工具调用**照常由 Harness 读写；插件不额外增加任何文件权限。
+
+## 6. 设置面板
+
+**只有一个入口。** 面板标题是 **ChatGPT Connect**，与包名 `dsh-chatgpt-connect` 不一致 —— 它们指的是同一个东西。路径：
+**设置 → ANB 工具 → ChatGPT连接**（英文界面：Settings → ANB 工具 → ChatGPT Connect）。下面全部内容都在这一张卡片里，
+包括 **更多设置** 分区；**设置 → 模型** 下没有第二个入口。
+
+| 分区 | 作用 |
+|---|---|
+| 账户 | 添加最多 16 个账户、选择活动账户、退出登录。 |
+| 授权 / 状态 | 发起浏览器 OAuth 流程，并查看当前账户是否仍然可用。 |
+| 更多设置 | 全部可选能力：代理、搜索、图片查看、图片生成、自动审查、模型目录。 |
+| 诊断 | 在界面里运行 `doctor` 与能力探针。 |
+
+每个能力开关的作用与默认值：
+
+| 控件 | 开启后的效果 | 默认 |
+|---|---|---|
+| `enableProxy` | 把本插件的 HTTP(S) 流量（含压缩的 OAuth 与额度响应）走一个无凭据代理。无关 Fetch 请求仍用 Harness 自己的传输方式；代理请求失败不会静默改直连。 | **关** |
+| `enableSearch` | 把整个 profile 的搜索路由切到 Codex；关闭后恢复之前的路由。 | **关** |
+| `enableImageTool` | 为视觉模型添加 `view_image`，读取本地文件与经过校验的公网 HTTP(S) 图片。 | **关** |
+| `enableImageGeneration` | 按提示词生图，或编辑选定的会话图片并使用有顺序的参考图。同时把图片句柄桥接到非 Codex 路由。 | **关** |
+| `enableAutoReview` | 把有界的审批上下文发送到 `chatgpt.com` 做二次判断；它更换的是**审批者**，不改变 Harness 允许什么。 | **关** |
+| `enableQuotaTool` | 注册只读工具 `codex_connect_quota`。改动后需重新加载插件。 | **关** |
+
+使用你当前 GPT 订阅计划提供的图片生成能力。成功生成的图片显示在会话回答下方；生成原文件与附件预览分开保存，
+因此关闭该能力或卸载插件都不会删除这些文件。
+
+**Luna Reserve 已移除。** 旧 `enableReserveFallback` 开关会被忽略，不再有 Reserve 协商或自动切换模型。旧 `gpt-reserve` 会话请明确
+选择一个普通模型；若 Harness 无法在原会话切换，请保留原会话并另开一个。旧 return 文件原样保留，不读取、迁移或删除。
+
+**保存生效。** 改完控件后按卡片底部的 **保存更改**。发生冲突或保存失败时会保留你的草稿。易变能力（代理、自动审查）保存后对**新请求**生效；
+额度工具需要重新加载插件。
+
+**两个最常见的改动，分步操作。**
+
+*添加第二个账户：* 设置 → ANB 工具 → ChatGPT连接 → **账户** → **添加账户** → 在浏览器完成批准 → 新账户出现在列表中 → 选中它，
+后续请求立即使用。
+
+*试用后关闭自动审查：* 设置 → ANB 工具 → ChatGPT连接 → **更多设置** → 取消勾选 **Codex 自动审查（代我审批）** → **保存更改**。
+下一个请求起审批回到你手上；已经批准过的动作不会被重跑。
+
+**面板看不见时。** 它依赖 ANB 工具壳与可用的配置表单。命令行下可执行
+`dsh plugin --profile web exec dsh-chatgpt-connect doctor --json` 查看加载状态；原始配置位于该 profile 的插件配置中，可手工编辑后重新加载。
+
+## 7. 出问题时怎么办
+
+下面用你实际会看到的原文症状；每一行给出含义与下一步。
+
+| 你看到什么 | 含义 | 下一步 |
+|---|---|---|
+| 模型选择器里没有 `openai-codex` | 还没有账户授权，或插件没在该 profile 加载 | 设置 → ANB 工具 → ChatGPT连接 → **授权**；再确认你启动的是同一个 profile |
+| 回答报 `overloaded` | 该次请求遇到服务端状况，**不代表**你的账户被封 | 重试一次；若持续，与一次成功的请求做对照。有界诊断信息附在错误里 |
+| 回答报 `401` / 提示重新授权 | 刷新凭据被撤销或过期 | 重新授权；除非你显式退出，已有账户会保留 |
+| 某个列表中的模型失败、另一个正常 | 模型权限由 OpenAI 决定，不由列表决定 | 换一个你以前用过的模型；把目录当广告看，不当权限 |
+| 面板能打开但每次保存都冲突 | 另一个窗口持有更新的草稿 | 刷新页面，重新修改，再保存一次 |
+| `doctor` 通过但请求仍失败 | `doctor` 只读本地元数据，不发请求 | 改做[快速开始](#4-快速开始完成一次真实任务)里的任务 —— 那才是唯一真实的检查 |
+
+都不匹配时，请收齐版本（`dsh --version` 与面板里的插件版本）、错误原文、最小复现，再到[反馈](#12-反馈)提。提交前请移除凭据、
+token、账户标识与完整会话归档。
+
+## 8. 更新、回滚、卸载
+
+| 动作 | 怎么做 | 你的数据会怎样 |
+|---|---|---|
+| 更新 | 用同一条 `dsh plugin … add` 命令安装更新的精确版本 | 设置与账户保留。先读变更记录；升版本不会替你迁移任何东西 |
+| 回滚 | 用同样方式安装上一个精确版本 | 设置保留。旧版本不认识的新设置会被忽略，不会被删除 |
+| 卸载 | `dsh plugin --profile web remove dsh-chatgpt-connect` | 插件代码移除；**凭据与已生成图片保留** |
+| 删除凭据 | 设置 → ANB 工具 → ChatGPT连接 → **退出所有账户**，或卸载前执行 `logout` | 删除 `$DSH_HOME/.openai-codex-auth.json` 中的 OAuth 状态 |
+| 删除生成原图 | 自行删除图片目录；插件把原文件与附件预览分开存放 | 不可恢复 |
+
+### 卸载与残留什么
 
 ```sh
-node /absolute/profile/node_modules/dsh-chatgpt-connect/lib/bin.js doctor --json \
-  --install-anchor /absolute/dsh/node_modules/@deepseek-ai/dsh/package.json
+dsh plugin --profile web remove dsh-chatgpt-connect
 ```
 
-`doctor --json` 只读本地安装元数据，不请求网络或输出原始凭据；指定安装锚点不证明该安装正在运行。`dsh plugin exec` 等包装命令自身可能核对或安装依赖。包含本改动的开发构建还会在设置中区分页面、Host 已加载和磁盘安装版本。诊断通过不代表模型权限，实际请求须另获授权。
+卸载**不是**退出登录：OAuth 状态文件与已生成的图片仍留在磁盘上，因为移除一个插件不该静默销毁你可能还需要的数据。
+若你确实要一起清掉，先退出登录（或删除 `$DSH_HOME/.openai-codex-auth.json`），再删除图片目录。插件从不读取或修改
+`~/.codex/auth.json`，那是另一个工具的文件。
 
-## 核心能力
+## 9. 数据、权限与隐私
 
-- **账户**：在 DSH 主机上保存最多 16 个账户，手动选择后续请求使用的活动账户，不按会话绑定。请求保持已固定的账户，插件不会自动轮换或静默故障切换。
-- **模型与 Astra 支持**：当前已验证的 DSH 与插件组合支持 `gpt-6-astra`。插件补充缺失的模型定义，提供 Low、Medium、High、Xhigh 和 Max 五档推理强度；Default 保持提供方默认值。已保存的 Off/Minimal 选择需要[明确更新](../MIGRATION.md#astra-reasoning-selections)。安装的依赖目录包含 Astra 时，插件保留其原生元数据，同时维持这五档已校准的推理选择。模型出现在列表中，不代表当前账户具有调用权限。
-- **Fast Mode**：为单个对话请求优先服务，默认关闭。可分别为新建主对话和新建子代理对话启用默认值，不改变已有对话。实际速度和额度消耗取决于服务端，不保证固定提速倍数。
-- **网络代理**：可选的无凭据 HTTP(S) 代理，只作用于本插件流量（含压缩的 OAuth 与额度响应）。无关 Fetch 请求仍走宿主原传输方式；代理失败不会静默改直连。适用于企业出口、本地网关，或任何无法直连服务端的网络环境。启用字段 `enableProxy`，完整行为见下表。
-- **额度**：显示服务端返回的 `5h`、`7d` 窗口及重置时间，已登录且标签页可见时通常每 60 秒刷新一次；失败后延长重试间隔。不虚构缺失窗口；Spark 使用独立额度桶。
-- **插件更新**：本分支关闭面板内的更新检查。它不访问任何 registry，只报告信息不可用，也不会据此建议更改 DSH。
+- **读什么** —— 已授权账户的 ChatGPT OAuth 凭据；模型目录；以及仅在你开启时才读取的本机图片（`view_image` 指向的文件）与
+  自动审查所需的审批上下文。
+- **是否外发及目标域名** —— 请求发往 OpenAI 的 `chatgpt.com` / `api.openai.com`，使用账户自己的凭据。**不向本项目维护者发送任何数据，
+  也没有遥测端点。** 若你启用代理，那个代理是你自己选择的出口。
+- **是否落盘及位置** —— OAuth 状态在 `$DSH_HOME/.openai-codex-auth.json`；生成的原图在会话图片目录；除此之外不写 Harness 会话文件以外的地方。
+- **谁可读写** —— 只有运行 Harness 的那个操作系统账户。插件不提供共享、无服务端存储、无多用户访问。请把该凭据文件当作密码对待。
+- **关键默认开关** —— 所有可选能力在全新安装时**全部关闭**（见设置表）。默认唯一打开的是授权后通往 OpenAI 的网络通路，那也是插件存在的意义。
+- **凭据存哪、是否进日志** —— 凭据只存在上述文件里。插件的诊断只输出退出码、允许清单内的错误码与版本字符串，**不打印 token、授权 URL
+  或账户标识**。也请不要自己把这些贴进 issue。
 
-## 可选能力
+## 10. 兼容性：要求、已验证、仍未确认
 
-以下选项在新安装时全部关闭。请在 **设置 → 插件 → 插件配置 → ChatGPT Connect** 或 **设置 → 模型 → Openai-Codex → 更多设置** 中编辑，再点击 **保存更改**。发生冲突或保存失败时会保留草稿。
+- **要求** —— Harness 处于 `>=0.1.7-rc.1 <0.3.0`，Node `^22.19.0 || >=24.0.0`。
+- **已验证** —— 该精确版本在[安装前需要准备什么](#2-安装前需要准备什么)所列十五个宿主上完成安装并 `doctor` 干净，证据是
+  `0.3.1-alpha.2` 的 CI 安装矩阵。
+- **仍未确认** —— 真实账户的 OAuth 流程、真实模型回答、真实图片生成与编辑、真实 Desktop 会话，以及跨 Harness 升级迁移旧任务。
+  本版本请把它们当作未测。
 
-| 能力 | 启用字段 | 重要行为 |
-|---|---|---|
-| 代理 | `enableProxy` | 不带凭据的 HTTP(S)，只作用于本插件流量，包括压缩的 OAuth 和额度响应；无关的 Fetch 请求仍使用宿主原来的传输方式。代理请求失败不会静默改走直连。 |
-| Codex 搜索 | `enableSearch` | 将整个 profile 的搜索路由切换为 Codex；关闭后恢复之前的路由。 |
-| 图片查看 | `enableImageTool` | 为视觉模型添加 `view_image`，读取本地文件和经过校验的公网 HTTP(S) 图片。 |
-| GPT Image 图片生成与编辑 | `enableImageGeneration` | 根据提示词生图，或编辑明确选定的会话图片并使用有顺序的参考图；可用性、尺寸和额度仍由账户及服务端控制。同时作为跨路由图片句柄桥接的开关：在非 Codex 路由上把 ChatGPT Connect 图片选择句柄持久化到图片工具结果中，使图片编辑在这些路由上同样可用；`openai-codex` 路由会跳过，因为其适配器已在每次请求时注入相同句柄。可选 `imageHandleBridgeTools` 可将桥接限定到指定工具。 |
-| 自动审查 | `enableAutoReview` | 将有界的审批上下文、工具参数、工作目录和待执行动作发送到 `chatgpt.com`，首次启用需要确认。失败时交还人工审批。 |
+## 11. 文档与开发
 
-使用你当前 GPT 订阅计划提供的图片生成能力。成功生成的图片会显示在对话回复下方，无需展开处理过程；原工具卡片仍保留在处理过程里。生成原文件与附件预览分开保存；关闭能力或卸载插件不会删除这些文件。存储和访问规则见[配置与恢复](reference.zh.md#搜索与图片工具)。
+`docs/` 不随 npm 包发布，因此这些链接指向仓库，在那里始终最新。
 
-自动审查在 Harness 策略判定需要审批后执行，不会绕过该策略。启用前请阅读[自动审查行为](auto-review.zh.md)。
-
-**Luna Reserve 已移除。** 旧 `enableReserveFallback` 开关会被忽略，不再协商或自动切换模型。旧 `gpt-reserve` 会话须由用户明确选择普通模型；如宿主不支持在原会话切换，请保留原会话并用所选普通模型新建对话。旧 return 文件原样保留，不读取、迁移或删除。账户额度 UI 和只读额度工具仍使用普通 60 秒缓存及失败冷却，不后台轮询。参见[迁移说明](reference.zh.md#luna-reserve-回退)。
-
-**可选的模型额度查询**：在插件 profile 配置中显式设置 `enableQuotaTool: true` 并重新加载插件后，会注册只读工具 `codex_connect_quota`。默认关闭，自定义设置卡没有该开关。它只返回共享 Codex 窗口的剩余比例、重置时间和新鲜度，不返回余额或账户标识。详见[额度查询](quota-tool.md)。百分比不是任务预算；资源限制不能成为降低要求、跳过测试或安全检查的理由。
-
-**Task 编排已冻结。** 开发遵循[核心维护范围](maintenance-scope.md)：保留接入、兼容、诊断与恢复。Task 控件仍暂停——激活请求会被拒绝，现有宿主的浏览器回归中，新 Session 不显示这些控件。Adaptive Task、自动委派及未证明收益的优化均已冻结；此决定不会删除已发布选项，也不会远程停用已有安装。
-
-## 常见问题与重要限制
-
-### 凭据保存在哪里？
-
-OAuth 凭据保存在运行 DSH 的主机上，由该主机用于向 OpenAI 认证和发起请求。正常浏览器账户响应只返回账户摘要，不返回原始 token。远程浏览器设备不一定是 DSH 主机。
-
-### 卸载插件会退出登录吗？
-
-不会。OAuth 状态单独保存在 `$DSH_HOME/.openai-codex-auth.json`（默认 `~/.dsh`），插件不会复制或修改 `~/.codex/auth.json`。只有确实要删除凭据时，才使用 **退出所有账户**，或在卸载前运行 `logout`。
-
-### 可以给不同对话分别切换账户吗？
-
-后续 Codex 请求使用所选活动账户，每个对话不会各自绑定账户。Fast Mode 才是会话级设置。取消新的授权会保留已有账户；明确的刷新凭据撤销响应会提示重新授权，临时故障则保留账户供重试。详见[账户行为](reference.zh.md#账户模型与额度)。
-
-### 为什么列表中的模型调用失败？
-
-模型 HTTP/SSE 请求失败时，会在原错误消息后附加有界、仅属于该请求的诊断信息。单凭 `overloaded` 消息不能认定账户被封锁。范围与复现方式见[持续错误诊断](experiments/issue-219-diagnostics.md)。
-
-账户权限、插件与宿主兼容性、网络条件都会影响可用性。其他客户端可以使用，不代表此集成一定可用。OpenAI 控制模型权限、额度、上下文容量和服务行为；目录条目不是账户权限证明。
-
-### 修改客户端请求头就能避免持续授权失败吗？
-
-目前没有这样的保证。本项目是第三方集成，不冒充 Codex Desktop，也不伪造安装标识或 attestation 请求头。pi-ai 模型/OAuth 路由与辅助路由目前采用不同的客户端身份。OpenAI 的 [App Server 文档](https://developers.openai.com/codex/app-server/)要求集成通过 `clientInfo` 标识自己的客户端，但这不能证明本插件直接调用后端接口的接受规则。`overloaded` 本身不是封锁证据。应保留有界诊断信息，对照成功和失败时段后再判断原因；请求 ID 仅私下提供，不公开 token 或完整会话归档。
-
-### 可以保留原来的 `dsh-codex` 插件吗？
-
-不能在同一份有效配置中并存：两者都会注册 `openai-codex`。请遵循 [MIGRATION.md](../MIGRATION.md)，只移除已经确认冲突的条目，不删除凭据或无关提供方。
-
-### 诊断能证明什么？
-
-`doctor` 只做本地检查。能力与 reviewer 探针在满足前置条件时可能联网并消耗额度。`auto-review-probe` 只检查 reviewer 路由和结构化响应，不验证完整 Harness 审批集成，也不执行被审查的动作。命令、限制与退出码见[诊断参考](reference.zh.md#能力探针)。
-
-兼容性记录中缺少某个 DSH/plugin 组合，只表示尚未验证，不表示已知不可运行。
-
-## 文档与开发
-
-`docs/` 目录不随 npm 包发布；以下链接指向仓库，在那里始终是最新版本。
-
-- [安装与升级](../INSTALL.md)
-- [版本策略](../VERSIONING.md) · [从 `dsh-codex` 迁移](../MIGRATION.md)
+- [安装与升级](../INSTALL.md) · [版本策略](../VERSIONING.md) · [从 `dsh-codex` 迁移](../MIGRATION.md)
 - [配置、诊断与恢复](reference.zh.md)
 - [架构与安全细节](design.zh.md)
 - [自动审查行为](auto-review.zh.md)
-- [本地请求计量：启用、报告与停用](request-metrics.zh.md)
 - [英文 README](../README.md)
-- [发布运行手册](../RELEASING.md) · [贡献指南](../CONTRIBUTING.md) · [安全政策](../SECURITY.md)
+
+从源码构建是另一条路径，只在需要改插件时用：
 
 ```sh
 pnpm install --frozen-lockfile
@@ -149,63 +218,27 @@ pnpm run test:browser
 pnpm run check:dsh-install
 ```
 
-`check` 包含静态检查、单元测试、构建、兼容性和打包检查。`lint:metadata` 检查包元数据与发布规则；`lint:source` 检查宿主与浏览器 TypeScript 中未处理或误用的 Promise、无效 await、重复 case 和不可达代码。浏览器回归与隔离 DSH 安装是另外两个命令。这些检查不使用真实 OAuth 授权，也不能替代真实账户验收。
+`lib/` 是入库的构建产物；请在 Linux 上重建，因为同一份源码在 Windows 上会产出不同字节。详见
+[发布运行手册](../RELEASING.md)。
 
-`lib/` 是入库的构建产物。请在 Linux 上重建——同一份源码在 Windows 上会产出不同字节，提交产物校验会失败。详见发布运行手册。
+## 12. 反馈
 
-## 贡献、安全与支持
+在 <https://github.com/yiyunet/dsh-chatgpt-connect/issues> 提 issue。最小有用材料是：插件版本、Harness 版本、错误原文、
+你能做到的最小复现。怀疑凭据或授权出问题时，改走[安全政策](../SECURITY.md)，不要开公开 issue。任何提交前请移除 token、
+账户标识与完整会话归档。
 
-Issue 与 Pull Request 提交到 <https://github.com/yiyunet/dsh-chatgpt-connect>。怀疑凭据或授权出问题时请私下报告，不要写进公开 issue；具体渠道见安全政策。任何报告中都不要附带完整会话归档、token 或账户标识。
+## 13. 许可与来源
 
-## 许可证与致谢
+Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改 Copyright 2026 yiyunet。以 **Apache-2.0** 发布 ——
+全文见 [LICENSE](../LICENSE)，声明见 [NOTICE](../NOTICE)。本项目包含派生自
+[Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) 的软件，并 fork 自
+[franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect)；所有上游版权均予保留。
+与 OpenAI、ChatGPT、Codex、DeepSeek、DeepSeek Harness 均无隶属关系，亦未获其赞助或背书。
 
-Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改与新增工作 Copyright 2026 yiyunet。本项目包含派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) 的软件，并 fork 自 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect)；所有上游版权均予保留。全部按 Apache-2.0 发布，详情见 [NOTICE](../NOTICE) 与 [LICENSE](../LICENSE)。
+已发布的包带有 SLSA provenance 存证，记录构建它的提交与 workflow。
 
-已发布的包带有 SLSA provenance 存证，记录了构建它的确切提交与 workflow，因此可以在不信任维护者机器的前提下，把 tarball 与本仓库对应起来。
+### 上游与本分支
 
-## 上游历史发布（旧包名 `dsh-codex-connect`）
-
-本节全部内容描述的是**上游**以旧包名发布的版本。包名、版本号、tag 状态与宿主数量均为上游当时的记录，**刻意保持原样不改写**；它们不代表本分支，也不含本分支的改动。安装本分支请使用上文「快速开始」中的命令。
-
-上游曾用 `dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12` 安装。那是**另一个 npm 包**，由上游以旧包名发布，不含本分支的任何改动。
-
-**已发布 Alpha 12：** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) 在下述仅恢复限制下适配精确的 stock DSH `0.2.2-alpha.3`，退役 Luna Reserve，并修复自带 Auto review preset 的 Codex Responses temperature 参数错误。发布渠道为 `alpha`，`latest` 保持 Alpha 10。参见[发行与迁移说明](release-notes/0.2.0-alpha.12.md)。这不要求升级 DSH。
-
-在精确的 DSH `0.2.2-alpha.3` 上，旧 Task 仅保留状态查看、停止和转手动。自动路由、续跑和证据子任务创建均被拒绝，包括内部直接入口。原有停用委派／归档安全退出仍保留 owner、回执和清理校验。原十四个 Host 的行为不变，所有版本的 Task 公共激活入口继续关闭。
-
-**历史 Alpha 11：** [`0.2.0-alpha.11`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.11) 交付 GPT-6.1 Terra、统一速度菜单、精确 DSH rc.4／rc.5、seeded fork 原图及 bili 原生压缩预检，并抬高直接 Undici 最低版本。全部 14 个精确宿主使用同一安装包完成验证；npm 版本／alpha、Git tag、prerelease 和包完整性均已独立回读。`latest` 保持 Alpha 10。参见[发布记录](release-notes/0.2.0-alpha.11.md)；无凭据检查不代表真实账户／模型或 Desktop 验收，Computer Use 不在本版内。
-
-**历史 Alpha 10：** [`0.2.0-alpha.10`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.10) 仅新增精确 DSH `0.2.1-rc.3`，保留原有 11 个宿主，并交付默认关闭的只读额度工具及紧凑速度菜单。npm 版本、alpha 标签、Git tag、prerelease 和包哈希已独立回读；`latest` 不变。rc.3 的上游 Git 源码映射仍未验证；无凭据合约不代表真实账户／模型或 Desktop 验收。参见[发布记录](release-notes/0.2.0-alpha.10.md)。
-
-上游当时的推荐为 Codex Connect `0.2.0-alpha.12` / DSH `0.2.1-rc.5`；其他受支持的精确宿主版本见下表。请先运行 `dsh --version`，再用 `doctor --json` 做本地诊断；单凭 CLI 版本无法证明实际安装的模型运行库版本，缺少版本元数据时会报告未知。其他版本请查阅[安装与升级](../INSTALL.md)。`alpha` 等会移动的 npm tag 不代表兼容性保证。
-
-| 要求 | 上游历史已验证组合 |
-|---|---|
-| Codex Connect | `0.2.0-alpha.12` |
-| DeepSeek Harness | `0.1.7-rc.1`、`0.1.7-rc.2`、`0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`、`0.2.1-rc.4`、`0.2.1-rc.5` 或 `0.2.2-alpha.3`（包版本必须一致） |
-| Node.js | `^22.19.0 \|\| >=24.0.0` |
-| 账户 | 通过 ChatGPT OAuth 使用所请求的 Codex 模型；可用性由 OpenAI 决定 |
-
-**历史维护版本：** [`0.2.0-alpha.9`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.9) 增加可选的推理强度回退设置，以及新顶层会话和普通子代理会话各自独立的 Standard / Fast / Ultrafast 默认设置。显式请求中的推理强度和后续手动速度选择优先；省略或重置时保留对应的旧默认行为。已有／恢复会话继续受到尊重。Ultrafast 仍要求登录并匹配可用的模型／账户路由；资格与实际服务档位仍未知。finite SSE 和 Task 暂停状态不变；不声称已测得提速倍数或完成真实账户／Desktop 验收。
-
-**历史维护版本：** [`0.2.0-alpha.8`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.8) 增加显式会话级 Standard / Fast / Ultrafast 选择，保留宿主重试策略，将 GPT-6.1 Sol 默认上下文设为 500,000 token，并修复恢复／文件身份及 Windows 打包检查。Ultrafast 仅对文档列明的两个 Codex 模型显式启用；不包含新主会话／子代理的默认设置。资格与实际服务档位仍报告未知，保留 finite SSE 及原有可选功能默认行为。不声称已测得提速或完成真实账户／Desktop 验收。
-
-**历史图片恢复版本：** [`0.2.0-alpha.7`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.7) 在 Harness 预览保存失败时保留已完成、已验证的原图，支持下载原图和明确选择继续编辑。工具说明明确：聊天可继续使用 DeepSeek，图片由 Codex Connect 的独立 ChatGPT OAuth 通道处理。其原有十一个精确宿主组合均保留验证；底层图片接口与凭据行为不变。合成检查不代表真实账户或 Desktop 验收。
-
-`0.2.0-alpha.4` 将精确宿主支持扩展到 DSH `0.2.1-alpha.2` 和 `0.2.1-alpha.3`，保留原有五个宿主。原有受支持宿主无需升级；Task 仍暂停，默认设置不变。
-
-**历史维护版本：** [`0.2.0-alpha.5`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.5) 交付精确 DSH `0.2.1-alpha.4`、`0.2.1-alpha.5` 和 `0.2.1-rc.1` 支持及宿主／浏览器运行版本诊断，保留原有七个已发布宿主。诊断共用一份版本策略。发布及无凭据验证不等于新的真实账户、Desktop 或已登录浏览器验收；#339 继续保持打开，单独跟进验收。
-
-历史发布 [`0.2.0-alpha.3`](release-notes/0.2.0-alpha.3.md) 增加官方 Desktop 登录适配和桌面版专用账户诊断，保留 Web 登录行为。Desktop 使用独立的 profile 和自带 CLI，请遵循 [Desktop 安装说明](../INSTALL.md#official-desktop)。声明的宿主版本、默认设置和账户存储不变。
-
-历史发布 [`0.2.0-alpha.2`](release-notes/0.2.0-alpha.2.md) 已发布精确 DSH `0.2.1-alpha.1` 的兼容适配，以及跨模型路由的图片选择句柄修复。较早的 `0.2.0-alpha.1` 安装包保持不变，仍拒绝该宿主。原有受支持宿主无需升级。
-
-截至 2026-11-04，npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`，因此默认安装仍选择 Alpha 10；会移动的 npm tag 不保证其他宿主版本的兼容性。这是上游的包与上游的标签状态，本分支的 `alpha` 是 `0.3.1-alpha.2`。
-
-历史发布 [`0.2.0-alpha.1`](release-notes/0.2.0-alpha.1.md) 通过模型目录补充增加 `gpt-6.1-sol`，并开始较短的独立插件编号。四个受支持的 DSH 版本不变，无需升级宿主。
-
-它保留 Alpha 4.54 的改动，在 DSH 0.2.0-rc.2 调用固定版本的 Codex 提供方时保留初始系统指令和工具定义，修正宿主与插件使用不同提供方库版本时的诊断，并补强 Canary 的普通请求检查。继续保留 Alpha 4.53 的核心维护改动、已有任务恢复与安全检查，以及 4.52 的[可选本地请求计量](request-metrics.zh.md)。配置私有目录后才采集；未知用量不当作零。不恢复 Task，也不升级模型库或 OAuth。
-
-上游安装包已通过上方十五个精确 DSH 版本的无凭据安装及运行回归验证。Task 控件仍暂停：激活请求会被拒绝，现有宿主的浏览器回归中，新 Session 不显示这些控件。这些检查不代表真实 OAuth、真实账户图片编辑、新宿主的已登录浏览器验收或完整用户验收；跨 Harness 升级迁移旧任务授权尚未验证。较旧组合及其任务行为见[安装与升级](../INSTALL.md)。
-
-历史记录：2026-10-10，维护者报告已在 Desktop `0.2.0-rc.2` 用已记录的本地适配包完成登录并正常使用。仅历史 `0.2.0-alpha.3` 客户端与该本地适配包进行了比较，确认只差包版本字符串。此比较不代表 `0.2.0-alpha.4` 的 Desktop 或真实账户验收，也不代表后续 npm 安装包的验收；未进行新的真实 Desktop 验收。参见[Desktop 验收记录](../INSTALL.md#official-desktop)。
+本包是 `dsh-chatgpt-connect`。它的祖先是**另一个 npm 包** `dsh-codex-connect`，由上游发布；安装后者不会安装本分支，
+本分支也不继承它的发布历史。逐版本的完整历史记录 —— 旧的宿主组合、日期、每个旧版本改了什么 —— 放在仓库里的
+[INSTALL.md](../INSTALL.md) 与 `docs/release-notes/`，不放在这里。

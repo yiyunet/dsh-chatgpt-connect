@@ -2,263 +2,251 @@
 
 ![ChatGPT Connect — your ChatGPT subscription inside DeepSeek Harness](https://raw.githubusercontent.com/yiyunet/dsh-chatgpt-connect/main/assets/hero.svg)
 
+**Use the ChatGPT subscription you already pay for, inside DeepSeek Harness.** If you work in Harness but
+answer coding questions in another app because your paid models live there, this plugin puts those models
+in the normal Harness model picker, so one session keeps the conversation, tools and attachments together.
+
+Apache-2.0 · independent community Alpha · **not affiliated with, sponsored by, or endorsed by** OpenAI,
+ChatGPT, Codex, DeepSeek, or DeepSeek Harness. · [Security and permissions](#9-data-permissions-and-privacy) ·
+[Uninstall and what it leaves behind](#uninstall-and-what-it-leaves-behind)
+
+English | [中文](docs/README.zh.md)
+
 [![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 [![license](https://img.shields.io/npm/l/dsh-chatgpt-connect?color=blue)](LICENSE)
 [![node](https://img.shields.io/node/v/dsh-chatgpt-connect)](package.json)
 
-English | [中文](docs/README.zh.md)
+## Contents
 
-Connect your ChatGPT subscription to DeepSeek Harness over OAuth: Codex models inside the
-normal Harness agent loop, optional GPT Image generation and editing, an optional HTTP(S)
-proxy scoped to this plugin's traffic, user-controlled defaults, Harness-native approvals,
-quota display, diagnostics, and reliable session recovery.
+1. [What this is and whether it works for you](#1-what-this-is-and-whether-it-works-for-you)
+2. [What you need before installing](#2-what-you-need-before-installing)
+3. [Install](#3-install) · [uninstall](#uninstall-and-what-it-leaves-behind)
+4. [Quick start: finish one real task](#4-quick-start-finish-one-real-task)
+5. [Daily use](#5-daily-use)
+6. [Settings panel](#6-settings-panel)
+7. [Problems and next steps](#7-problems-and-next-steps)
+8. [Update, roll back, uninstall](#8-update-roll-back-uninstall)
+9. [Data, permissions and privacy](#9-data-permissions-and-privacy)
+10. [Compatibility: required, verified, unconfirmed](#10-compatibility-required-verified-unconfirmed)
+11. [Documentation and development](#11-documentation-and-development)
+12. [Feedback](#12-feedback)
+13. [Licence and provenance](#13-licence-and-provenance)
 
-Community Alpha. This project is independent and is **not affiliated with, sponsored by, or
-endorsed by** OpenAI, ChatGPT, Codex, DeepSeek, or DeepSeek Harness.
+## 1. What this is and whether it works for you
 
-**Fork status — `0.3.1-alpha.2`, published 2026-11-07 on the npm `alpha` dist-tag through
-Trusted Publishing.** This is the self-maintained fork of
-[franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect), which
-derives from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex). The package and the
-CLI are both named `dsh-chatgpt-connect`; the settings panel is titled **ChatGPT Connect**.
-Upstream's own release records are preserved verbatim at the end of this file under their
-previous package name.
-
-What this fork changes relative to upstream:
-
-- **Admission and verification are separate decisions.** The package declares a bounded Host
-  range, so a DSH update inside that range no longer refuses to load. A version is reported as
-  `compatible` only when it is on the maintainer-verified list; any other version inside the
-  range is reported as `unverified`, never asserted as working. Availability of a Host is
-  decided by the declared range; trustworthiness is decided by the verified list.
-- **Package, CLI, and repository names are unified.** Package and CLI are
-  `dsh-chatgpt-connect`; the settings panel title is `ChatGPT Connect`, and under the Chinese
-  interface language the ANB 工具 tab reads 「ChatGPT连接」.
-- **The in-panel update check is disabled in this fork.** The panel reports that update
-  information is unavailable and makes no network request while disabled. Install upgrades
-  through the plugin manager, not through this panel.
-- **Windows acceptance paths are usable.** The native-compaction acceptance scripts no longer
-  apply POSIX-only permission and ownership checks on Windows; POSIX behaviour is unchanged.
-
-Codex Connect adds the `openai-codex` model provider to the normal Harness agent loop.
-Harness continues to manage tools, permissions, approvals, attachments, session persistence,
-compaction, and recovery. Installing the plugin does not change your default model or search
+`dsh-chatgpt-connect` adds one provider, `openai-codex`, to Harness. Harness keeps managing tools,
+permissions, approvals, attachments, sessions, compaction and recovery; this plugin only supplies the
+model connection and an optional image lane. Installing it does not change your default model or search
 route, and it does not turn a ChatGPT subscription into an OpenAI Platform API key.
 
-## Requirements
+**Current state.** Published on npm as the `alpha` channel, latest release `0.3.1-alpha.2` (2026-11-08).
+It runs; it is not a finished product. Pick the exact version — see [Install](#3-install).
+
+Four different kinds of limit, stated separately because they need different reactions:
+
+- **Not built.** Ultra orchestration for Codex Sol and a desktop Computer Use executor do not exist here.
+- **Built but off by default.** Proxy, search takeover, image viewing, image generation, auto-review and
+  the quota tool are all disabled on a fresh install; each is opt-in in the settings panel.
+- **Needs permission you may not have.** Model availability, quota and served tier are decided by OpenAI.
+  A model in the list is not proof your account may use it.
+- **Present but unverified.** The fifteen-host installation matrix is a keyless install and `doctor`
+  regression. It does not demonstrate a live OAuth flow, real model calls, real image editing, or a real
+  Desktop session.
+
+## 2. What you need before installing
 
 | Requirement | Value |
 |---|---|
-| Plugin | `dsh-chatgpt-connect@0.3.1-alpha.2` |
-| DeepSeek Harness | Declared range `>=0.1.7-rc.1 <0.3.0`. This version is reported `compatible` only on the fifteen hosts verified for it: `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5`, `0.2.2-alpha.3`. Any other Host inside the declared range is reported `unverified`, never asserted as working. |
+| DeepSeek Harness | `>=0.1.7-rc.1 <0.3.0`. Reported `compatible` only on this release's verified hosts: `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5`, `0.2.2-alpha.3`. Other hosts inside the range report `unverified`. |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
-| Account | ChatGPT OAuth with access to the requested Codex model; availability is decided by OpenAI |
+| Account | A ChatGPT account whose subscription can reach the model you want, authorized through the browser during setup |
+| Profile | A Harness *profile* is a named configuration (for example `web`). The plugin installs into one profile and only appears there. |
 
-The exact pairing recorded for this release is in
-[compatibility.json](compatibility.json); `latestDshVersion` is `0.2.2-alpha.3`. A Host entry
-that is missing from the verified list means the combination is unverified, not known to be
-broken. Do not infer support for a newer Host from an older pairing, and do not upgrade or
-downgrade Harness merely to match a row.
+A moving npm tag is not a compatibility guarantee. Do not upgrade or downgrade Harness just to match a row.
 
-## Quick start
+## 3. Install
 
-### 1. Install
+Run this where you normally run Harness, replacing `web` with your profile name:
 
 ```sh
 dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.2
 dsh web
 ```
 
-Replace `web` with your existing profile name, and use that same profile when starting
-Harness. From a DSH source checkout, prefix the commands with `pnpm`.
+The plugin takes effect when you next start that profile — `dsh web` above. It does not change your
+default model; selecting one is the next step.
 
-Always pass the exact version. npm's `latest` tag still points at the `0.0.0`
-name-reservation placeholder, so an unpinned install cannot run; `alpha` is the only channel
-this fork publishes to, and a moving tag is not a compatibility guarantee for other Hosts.
-Other profiles and the full installation checks are in [INSTALL.md](INSTALL.md).
+Always pass the exact version. npm's `latest` tag still points at a `0.0.0` name-reservation placeholder, so
+an unpinned install cannot run. If you build Harness from a source checkout, prefix the same commands with
+`pnpm`. Other routes and the full host table are in [INSTALL.md](INSTALL.md).
 
-### 2. Authorize and select a model
+**Removing it:** see [Uninstall](#uninstall-and-what-it-leaves-behind). Uninstalling does not sign you out
+or delete your credentials — that is a separate, deliberate action.
 
-Open **Settings → Models → Openai-Codex → Authorize**, then complete the approval yourself in
-the browser. If an embedded window is blocked, select **Open ChatGPT sign-in page**. Choose an
-`openai-codex` model in the normal Harness model picker.
+## 4. Quick start: finish one real task
 
-Never paste an authorization URL, code, token, or account identifier into an issue, log, chat,
-or configuration file. For a browser on another device, the optional manual callback form can
-complete the pending login without forwarding the localhost callback port; see
-[Remote browser authorization](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#remote-browser-authorization).
+Installation success is not task success. An entry appearing in Settings, or `doctor` passing, only proves
+the plugin loaded; it says nothing about whether a model answered. The four steps below end at a real answer.
 
-### 3. Check the installation
+1. **Input** — a question you actually want answered, typed in a new Harness session (for example: *explain
+   what this repository's release workflow does*).
+2. **Action** — open the model picker in the composer, choose an `openai-codex` model, and send. If no
+   `openai-codex` entry appears, the account is not authorized yet: open **Settings → ANB 工具 →
+   ChatGPT Connect → Authorize** and finish the browser approval, then pick the model again.
+3. **Where the result appears** — as the normal assistant answer in that session. Tool approvals, file
+   changes and attachments behave as they do for any other model.
+4. **How to tell it worked** — you got a written answer to your question, with no red error block and no
+   `overloaded`/`401`-style diagnostic appended. If instead you get an error, go to
+   [Problems and next steps](#7-problems-and-next-steps); if the answer arrives but you want to know what
+   the request consumed, see the quota section of the settings panel.
 
-For a package-manager-free diagnostic, run the already installed bin directly, replacing these
-independently identified paths:
+## 5. Daily use
+
+**Main line, end to end.** Start the profile (`dsh web`) → open or create a session → pick an
+`openai-codex` model in the composer → work normally (ask, attach files, approve tool calls) → read the
+answer in the session, where images also land if you enabled generation.
+
+**Shortest path from the second time on.** `dsh web` → pick the model → ask. Nothing needs re-authorizing
+and no setting needs re-applying; the account selection and every toggle persist. If you always want the
+same model, your profile's default model covers the picker step, so it collapses to *start the session and
+ask*.
+
+Things that do change state, so you are not surprised:
+
+- **Account** — choosing another account affects *subsequent* requests, not conversations already started;
+  each request keeps the account it captured. There is no automatic rotation or failover.
+- **Fast Mode** and per-conversation speed are scoped to one conversation.
+- **Attachments and tool calls** are read/written by Harness as usual; this plugin adds no file permissions
+  of its own.
+
+## 6. Settings panel
+
+**There is exactly one entry.** The panel title is **ChatGPT Connect**, which does not match the package
+name `dsh-chatgpt-connect` — that is the same thing. Path:
+**Settings → ANB 工具 → ChatGPT Connect** (Chinese UI: 设置 → ANB 工具 → ChatGPT连接). Everything below lives
+inside that one card, including the **More settings** section; there is no separate entry under *Models*.
+
+| Section | What it is for |
+|---|---|
+| Accounts | Add up to 16 accounts, pick the active one, sign out. |
+| Authorize / status | Start the browser OAuth flow and see whether the current account still works. |
+| More settings | Every optional capability: proxy, search, image viewing, image generation, auto-review, model catalogue. |
+| Diagnostics | Run `doctor` and the capability probes from the UI. |
+
+Every capability toggle with its effect and default:
+
+| Control | Effect when on | Default |
+|---|---|---|
+| `enableProxy` | Routes this plugin's HTTP(S) traffic — including compressed OAuth and quota responses — through a credential-free proxy. Unrelated Fetch calls keep Harness's transport, and a failed proxy request never retries directly. | **off** |
+| `enableSearch` | Makes Codex the search route for the whole profile; turning it off restores the previous route. | **off** |
+| `enableImageTool` | Adds `view_image` for local files and validated public HTTP(S) images. | **off** |
+| `enableImageGeneration` | Generate images from a prompt, or edit selected conversation images with ordered references. Also bridges image handles to non-Codex routes. | **off** |
+| `enableAutoReview` | Sends bounded approval context to `chatgpt.com` for a second opinion; it changes *who reviews*, not what Harness permits. | **off** |
+| `enableQuotaTool` | Registers the read-only `codex_connect_quota` tool. Reload the plugin after changing it. | **off** |
+
+Use the image generation capability included with your current GPT subscription. Successful images appear
+below the answer in the conversation; generated originals are stored separately from attachment previews, so
+disabling the capability or uninstalling the plugin does not delete them.
+
+**Luna Reserve has been removed.** Legacy `enableReserveFallback` settings are ignored; no Reserve
+negotiation or automatic model switching remains. Select an ordinary model explicitly for an old
+`gpt-reserve` conversation; if Harness cannot change that conversation's model, keep it and start a new one.
+Old return files are not read, migrated or deleted.
+
+**Saving.** Change a control, then press **Save changes** at the bottom of the card. A conflict or a failed
+save keeps your draft. Volatile capabilities (proxy, auto-review) apply to new requests after saving; the
+quota tool needs a plugin reload.
+
+**Two common changes, step by step.**
+
+*Add a second account:* Settings → ANB 工具 → ChatGPT Connect → **Accounts** → **Add account** → complete the
+browser approval → the new account appears in the list → select it; later requests use it immediately.
+
+*Turn off auto-review after trying it:* Settings → ANB 工具 → ChatGPT Connect → **More settings** → clear
+**Codex Auto-review (Approve for me)** → **Save changes**. Approvals go back to you on the next request;
+nothing already approved is re-run.
+
+**When the panel is not visible.** It needs the ANB 工具 shell and a served configuration form. From the
+command line, `dsh plugin --profile web exec dsh-chatgpt-connect doctor --json` reports the loaded state; the
+raw configuration lives in the profile's plugin configuration, which you can edit by hand and reload.
+
+## 7. Problems and next steps
+
+Use the literal text you see; each row tells you what it means and what to do next.
+
+| What you see | What it means | Next |
+|---|---|---|
+| No `openai-codex` entry in the model picker | No account authorized, or the plugin is not loaded in this profile | Settings → ANB 工具 → ChatGPT Connect → **Authorize**; then re-check you started the same profile |
+| Answer fails with `overloaded` | A service-side condition on that request. It is **not** proof your account is blocked | Retry once; if it persists, compare a request that worked. The bounded diagnostic metadata is attached to the error |
+| Answer fails with `401` / re-authorization prompt | The refresh credential was revoked or expired | Authorize again; existing accounts are preserved unless you sign out explicitly |
+| A listed model fails while another works | Model entitlement is decided by OpenAI, not by the list | Try a model you have used before; treat the catalogue as advertising, not permission |
+| Settings shows the panel but every save conflicts | Another window holds a newer draft | Reload the page, re-apply, save once |
+| `doctor` passes but requests still fail | `doctor` is local metadata; it makes no request | Do the [quick start](#4-quick-start-finish-one-real-task) task instead — that is the only real check |
+
+If none of these match, collect the version (`dsh --version` and the plugin version from the panel), the
+exact error text, and a minimal reproduction, then use [Feedback](#12-feedback). Remove credentials, tokens,
+account identifiers and full session archives before posting.
+
+## 8. Update, roll back, uninstall
+
+| Action | How | What happens to your data |
+|---|---|---|
+| Update | Install a newer exact version with the same `dsh plugin … add` command | Settings and accounts are kept. Read the changelog first; a version bump does not migrate anything for you |
+| Roll back | Install the previous exact version the same way | Settings are kept. A newer setting that the older version does not know is ignored, not deleted |
+| Uninstall | `dsh plugin --profile web remove dsh-chatgpt-connect` | The plugin code goes; **credentials and generated images stay** |
+| Remove credentials | Settings → ANB 工具 → ChatGPT Connect → **Sign out all accounts**, or run `logout` before uninstalling | Deletes the OAuth state at `$DSH_HOME/.openai-codex-auth.json` |
+| Remove generated originals | Delete the image directory yourself; the plugin stores originals separately from attachment previews | Irreversible |
+
+### Uninstall and what it leaves behind
 
 ```sh
-node /absolute/profile/node_modules/dsh-chatgpt-connect/lib/bin.js doctor --json \
-  --install-anchor /absolute/dsh/node_modules/@deepseek-ai/dsh/package.json
+dsh plugin --profile web remove dsh-chatgpt-connect
 ```
 
-`doctor --json` reports local installation metadata without a network request or raw
-credentials; an anchor does not prove that installation is running. Wrappers such as
-`dsh plugin exec` may reconcile dependencies. Development builds containing that change also
-distinguish page, Host-loaded, and installed plugin versions in settings. A passing diagnostic
-is not proof of model access; an actual request requires separate authorization.
+Uninstalling is **not** a sign-out: the OAuth state file and any generated images remain on disk, because
+removing a plugin should not silently destroy data you may still want. If you *do* want it gone, sign out
+first (or delete `$DSH_HOME/.openai-codex-auth.json`) and delete the image directory. The plugin never reads
+or modifies `~/.codex/auth.json`; that file belongs to a different tool.
 
-## Core capabilities
+## 9. Data, permissions and privacy
 
-- **Accounts.** Save up to 16 accounts on the DSH host and manually select the active account
-  for subsequent requests. Account selection is not a per-session binding. Requests keep their
-  captured account; the plugin does not rotate accounts or silently fail over.
-- **Models and Astra support.** The currently verified DSH and plugin combination supports
-  `gpt-6-astra`. The plugin supplies its missing model definition with Low, Medium, High,
-  Xhigh, and Max reasoning levels; Default preserves the provider default. Saved
-  Off/Minimal selections require an [explicit update](MIGRATION.md#astra-reasoning-selections).
-  When the installed dependency catalog includes Astra, the plugin preserves its native
-  metadata while retaining these five calibrated reasoning choices. A model appearing in the
-  list does not mean the current account has permission to use it.
-- **Fast Mode.** Request priority service for one conversation, off by default. Optional,
-  separate profile settings can enable it for newly started top-level or subagent
-  conversations without changing existing conversations. Actual speed and quota consumption
-  depend on the service; no fixed speed multiplier is guaranteed.
-- **Network proxy.** Optional credential-free HTTP(S) proxy that applies only to this plugin's
-  traffic, including compressed OAuth and quota responses. Unrelated Fetch calls keep the
-  host's original transport, and a failed proxy request never silently retries directly. This
-  is the setting that makes the plugin usable behind a corporate egress, a local gateway, or
-  any network that cannot reach the provider directly. Enable it with `enableProxy`; the
-  exact behaviour is in the table below.
-- **Quota.** Show the server-returned `5h` and `7d` windows and reset times, normally refreshed
-  every 60 seconds while signed in and the tab is visible; failures back off. Missing windows
-  are not invented; Spark uses its separate quota bucket.
-- **Plugin updates.** The in-panel update check is disabled in this fork. It never contacts a
-  registry and reports the information as unavailable; no DSH change is ever recommended from
-  it.
+- **Reads** — your ChatGPT OAuth credentials for the authorized account; the model catalogue; and, only when
+  you enable them, local images you point `view_image` at and the approval context needed for auto-review.
+- **Sends off the machine** — requests go to OpenAI at `chatgpt.com` / `api.openai.com`, using the account's
+  own credentials. Nothing is sent to the project's maintainers, and there is no telemetry endpoint. If you
+  enable a proxy, that proxy is an egress you chose and configure.
+- **Writes to disk** — OAuth state at `$DSH_HOME/.openai-codex-auth.json`; generated image originals in the
+  session's image directory; nothing else outside Harness's own session files.
+- **Who can read it** — the OS account running Harness. The plugin adds no sharing, no server-side store and
+  no multi-user access. Treat the auth file as a password.
+- **Default switches** — every optional capability is **off** on a fresh install (see the settings table).
+  The one thing that is on by default is the network path to OpenAI once you authorize, which is the point
+  of the plugin.
+- **Credentials in logs** — the plugin's diagnostics report exit codes, allowlisted error codes and version
+  strings. It does not print tokens, authorization URLs or account identifiers. Do not paste those into an
+  issue yourself.
 
-## Optional capabilities
+## 10. Compatibility: required, verified, unconfirmed
 
-Every option below is off on a fresh installation. Edit them in
-**Settings → Plugins → Plugin configuration → ChatGPT Connect** or
-**Settings → Models → Openai-Codex → More settings**, then select **Save changes**. A conflict
-or failed save preserves your draft.
+- **Required** — a Harness inside `>=0.1.7-rc.1 <0.3.0`, on Node `^22.19.0 || >=24.0.0`.
+- **Verified** — this exact release installed and reported `doctor` cleanly on each of the fifteen hosts
+  listed in [What you need](#2-what-you-need-before-installing), in the CI installation matrix for release
+  `0.3.1-alpha.2`.
+- **Not confirmed** — live OAuth against a real account, real model responses, real image generation and
+  editing, a real Desktop session, and migrating tasks across a Harness upgrade. Treat those as untested
+  for this release.
 
-| Capability | Enable with | Important behavior |
-|---|---|---|
-| Proxy | `enableProxy` | Credential-free HTTP(S), scoped to this plugin's traffic, including compressed OAuth and quota responses. Unrelated Fetch calls retain the host's original transport. A failed proxy request does not silently retry directly. |
-| Codex Search | `enableSearch` | Selects Codex for the entire profile's search route; disabling restores the previously active route. |
-| Image viewing | `enableImageTool` | Adds `view_image` to vision-capable models for local files and validated public HTTP(S) images. |
-| GPT Image generation and editing | `enableImageGeneration` | Generate from a prompt or edit selected conversation images with ordered references. Availability, dimensions, and quota remain account- and service-controlled. Also gates the cross-route image handle bridge, which persists the ChatGPT Connect image selection handles into image tool results on non-Codex routes so image editing works there too; the `openai-codex` route is skipped because its adapter already injects the same handles per request. Optional `imageHandleBridgeTools` restricts the bridge to specific tools. |
-| Auto-review | `enableAutoReview` | Sends bounded approval context, tool arguments, working directory, and the planned action to `chatgpt.com`, with confirmation on first enablement. Failures return to human approval. |
+## 11. Documentation and development
 
-Use the image generation capability included with your current GPT subscription. Successful
-images appear below the conversation answer without opening its processing details; the
-original tool card remains available there. Generated originals are stored separately from
-attachment previews; disabling the capability or uninstalling the plugin does not delete them.
-See
-[Configuration and recovery](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#search-and-image-tools)
-for storage and access rules.
+`docs/` is not shipped in the npm package, so those links point at GitHub and stay current there.
 
-Auto-review operates after Harness policy requires approval; it does not bypass that policy.
-Read [Auto-review behavior](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/auto-review.md)
-before enabling it.
-
-**Luna Reserve has been removed.** Legacy `enableReserveFallback` settings are ignored; no
-Reserve negotiation or automatic model switching remains. Select an ordinary model explicitly
-for an old `gpt-reserve` conversation. If the Host cannot change that conversation's model,
-preserve it and start a new conversation with the model you choose. Old return files are not read, migrated or deleted. Account quota UI and the read-only quota tool retain ordinary
-60-second caching and failure cooldowns, with no background polling. See
-[migration guidance](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#luna-reserve-fallback).
-
-**Optional model quota observation.** Profile composition can set `enableQuotaTool: true` and
-reload the plugin to expose the read-only `codex_connect_quota` tool. It is off by default and
-has no custom settings-card toggle. It reports shared Codex window percentages, reset times and
-freshness, excluding balances and account identifiers. See
-[quota observation](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/quota-tool.md).
-Percentages are not task budgets; resource limits never justify dropping requirements, tests,
-or safety checks.
-
-**Task orchestration is frozen.** Development follows the
-[core maintenance scope](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/maintenance-scope.md):
-maintain connection, compatibility, diagnostics, and recovery. Task controls remain paused —
-activation is rejected, and existing current-Host browser regressions show no controls in fresh
-Sessions. Adaptive Task, automatic delegation, and unproven optimizations are frozen; previously
-published options are not removed or remotely disabled by this decision.
-
-## FAQ and important limits
-
-### Where are my credentials stored?
-
-OAuth credentials are stored on the host running DSH and used there to authenticate and send
-requests to OpenAI. Normal browser account responses return account summaries, not raw tokens.
-A remote browser device is not necessarily the DSH host.
-
-### Does uninstalling sign me out?
-
-No. OAuth state is stored separately at `$DSH_HOME/.openai-codex-auth.json` (`~/.dsh` by
-default). The plugin does not copy or modify `~/.codex/auth.json`. Use **Sign out all
-accounts**, or `logout` before uninstalling, only when deleting credentials is intentional.
-
-### Can I switch accounts for different conversations?
-
-Subsequent Codex requests use the selected active account; conversations do not bind their own
-accounts. Fast Mode is conversation-scoped. Cancelling a new authorization preserves existing
-accounts; an explicit revoked-refresh response asks for reauthorization, while temporary
-failures preserve the account for retry. See
-[Account behavior](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#accounts-models-and-quota).
-
-### Why does a listed model fail?
-
-Model HTTP/SSE failures include bounded, request-local diagnostic metadata after the existing
-error message. An `overloaded` message alone does not establish an account block. See
-[persistent-error diagnostics](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/experiments/issue-219-diagnostics.md)
-for scope and reproduction.
-
-Account permissions, plugin/host compatibility, and network conditions all affect availability.
-Access on another client does not guarantee this integration will work. OpenAI controls model
-access, quota, context capacity, and service behavior; catalog entries are not proof of
-entitlement.
-
-### Does changing client headers prevent persistent authorization failures?
-
-No such guarantee is established. This project is a third-party integration; it does not
-impersonate Codex Desktop or fabricate installation/attestation headers. The pi-ai model/OAuth
-route and auxiliary routes currently identify themselves differently. OpenAI's
-[App Server documentation](https://developers.openai.com/codex/app-server/) asks integrations to
-identify their own client with `clientInfo`; it does not establish acceptance rules for this
-plugin's direct backend calls. An `overloaded` message is not proof of a block. Capture the
-bounded error metadata and compare successful and failed windows before attributing the cause;
-share request IDs privately, never tokens or full session archives.
-
-### Can I keep the original `dsh-codex` plugin installed?
-
-Not in the same effective configuration: both register `openai-codex`. Follow
-[MIGRATION.md](MIGRATION.md); remove only the confirmed conflicting entry, not credentials or
-unrelated providers.
-
-### What do diagnostics prove?
-
-`doctor` is local. Capability and reviewer probes may make network requests and consume quota
-when their preconditions are met. `auto-review-probe` checks only the reviewer route and
-structured response, not the full Harness approval integration or execution of the reviewed
-action. Commands, limits, and exit codes are in the
-[diagnostics reference](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md#capability-probes).
-
-A missing entry in the compatibility record means a DSH/plugin combination is unverified, not
-known to be broken.
-
-## Documentation and development
-
-The `docs/` tree is not shipped inside the npm package, so those links point at GitHub and are
-always current there.
-
-- [Installation and upgrades](INSTALL.md)
-- [Versioning policy](VERSIONING.md) · [Migration from `dsh-codex`](MIGRATION.md)
-- [Configuration, diagnostics, and recovery](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md)
+- [Installation and upgrades](INSTALL.md) · [Versioning policy](VERSIONING.md) · [Migration from `dsh-codex`](MIGRATION.md)
+- [Configuration, diagnostics and recovery](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/reference.md)
 - [Architecture and security details](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/design.md)
-- [Auto-review behavior](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/auto-review.md)
-- [Local request metrics: enable, report, and disable](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/request-metrics.md)
+- [Auto-review behaviour](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/auto-review.md)
 - [Chinese README](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/README.zh.md)
-- [Release runbook](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/RELEASING.md) ·
-  [Contributing](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/CONTRIBUTING.md) ·
-  [Security policy](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/SECURITY.md)
+
+Building from source is a separate path, only for working on the plugin:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -267,84 +255,31 @@ pnpm run test:browser
 pnpm run check:dsh-install
 ```
 
-`check` covers static checks, unit tests, build, compatibility, and packaging.
-`lint:metadata` checks package and release rules; `lint:source` checks host and browser
-TypeScript for unhandled or misused promises, invalid awaits, duplicate cases, and unreachable
-code. Browser regression and isolated DSH installation are separate commands. These checks use
-no real OAuth authorization and do not replace real-account acceptance.
+`lib/` is a committed build product; rebuild it on Linux, because the same sources produce different bytes
+on Windows. See the [release runbook](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/RELEASING.md).
 
-`lib/` is a committed build product. Rebuild it on Linux — the same sources produce different
-bytes on Windows and the committed-output check will fail. See the release runbook.
+## 12. Feedback
 
-## Contributing, security, and support
+Open an issue at <https://github.com/yiyunet/dsh-chatgpt-connect/issues>. The minimum useful material is: the
+plugin version, the Harness version, the exact error text, and the smallest reproduction you can manage. For
+a suspected credential or authorization problem, follow the
+[security policy](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/SECURITY.md) instead of opening a
+public issue. Remove tokens, account identifiers and full session archives from anything you post.
 
-Issues and pull requests are welcome at
-<https://github.com/yiyunet/dsh-chatgpt-connect>. Report a suspected credential or authorization
-problem privately, never in a public issue; the security policy describes the channel. Do not
-attach full session archives, tokens, or account identifiers to any report.
+## 13. Licence and provenance
 
-## License and acknowledgements
+Copyright 2026 Frank Song for the original Codex Connect work; Copyright 2026 yiyunet for this fork's
+modifications. Distributed under **Apache-2.0** — full text in [LICENSE](LICENSE), notices in [NOTICE](NOTICE).
+This project contains software derived from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) and
+is forked from [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect); all
+upstream copyrights are retained. It is not affiliated with, sponsored by, or endorsed by OpenAI, ChatGPT,
+Codex, DeepSeek, or DeepSeek Harness.
 
-Copyright 2026 Frank Song for the original Codex Connect work. Copyright 2026 yiyunet for this
-fork's modifications and additional work. This project contains software derived from
-[Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex) and is forked from
-[franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect); all
-upstream copyrights are retained. All are distributed under Apache-2.0; see [NOTICE](NOTICE)
-and [LICENSE](LICENSE).
+The published artifact carries a SLSA provenance attestation naming the commit and workflow that built it.
 
-The published artifact carries a SLSA provenance attestation naming the exact commit and
-workflow that built it, so the tarball can be tied back to this repository without trusting a
-maintainer's machine.
+### Upstream and this fork
 
-## Historical upstream releases (previous package name `dsh-codex-connect`)
-
-Everything in this section describes releases published **upstream** under the previous package
-name. Package names, version numbers, tag states, and Host counts are upstream's own records at
-the time they were written and are intentionally not rewritten; they do not describe this fork
-and do not contain this fork's changes. Use the quick start above to install this fork.
-
-Historical upstream installs used
-`dsh plugin --profile web add dsh-codex-connect@0.2.0-alpha.12`. That is a **different npm
-artifact**, published by upstream under the previous package name; it is not this fork and does
-not contain any of this fork's changes.
-
-**Published Alpha 12:** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) adds exact stock DSH `0.2.2-alpha.3` with the recovery-only restriction below, retires Luna Reserve and fixes the stock Auto review preset's unsupported Codex Responses temperature. It is published on `alpha`; `latest` remains Alpha 10. See the [release and migration notes](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.12.md). This does not request a DSH upgrade.
-
-On exact DSH `0.2.2-alpha.3`, saved Task records are recovery-only: inspect state, stop or take over manually. Automatic routing, resume and evidence-child creation are rejected, including internal direct entry points. Existing safe-disable/archive exits retain their owner, receipt and cleanup checks. The prior fourteen Hosts keep their behavior; Task's public activation gate remains closed everywhere.
-
-**Historical Alpha 11:** [`0.2.0-alpha.11`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.11) delivers GPT-6.1 Terra, the unified speed menu, exact DSH rc.4/rc.5, seeded-fork originals and bounded native bili preflight, with a higher direct Undici minimum. All fourteen exact Hosts passed against one package; npm version/alpha, Git tag, prerelease and archive integrity were independently read back. `latest` remains Alpha 10. See the [release record](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.11.md); keyless checks do not establish real-account/model or Desktop acceptance, and Computer Use is not included.
-
-**Historical Alpha 10:** [`0.2.0-alpha.10`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.10) adds only exact DSH `0.2.1-rc.3`, retains the eleven previous hosts, and delivers the default-off read-only quota tool and compact speed menu. npm version, alpha tag, Git tag, prerelease and archive hashes were independently verified; `latest` is unchanged. The upstream rc.3 Git-source mapping remains unverified; keyless contracts do not establish real-account/model or Desktop acceptance. See the [release record](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.10.md).
-
-This guide recommends Codex Connect `0.2.0-alpha.12` / DSH `0.2.1-rc.5`; the other exact supported hosts are listed below. Check `dsh --version` first and use `doctor --json` for local diagnostics; the CLI version alone does not prove which model-runtime packages are installed, and missing metadata is reported as unknown. For other versions, use [Installation and upgrades](INSTALL.md). A moving npm tag such as `alpha` is not a compatibility guarantee.
-
-| Requirement | Historical upstream verified pairing |
-|---|---|
-| Codex Connect | `0.2.0-alpha.12` |
-| DeepSeek Harness | `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5` or `0.2.2-alpha.3` (consistent package set) |
-| Node.js | `^22.19.0 \|\| >=24.0.0` |
-| Account | ChatGPT OAuth with access to the requested Codex model; availability is decided by OpenAI |
-
-**Historical maintenance release:** [`0.2.0-alpha.9`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.9) adds an optional reasoning-effort fallback and independent Standard / Fast / Ultrafast defaults for new top-level and ordinary subagent conversations. Explicit request effort and later manual speed choices win; omitted/reset settings retain the corresponding legacy defaults. Existing/resumed sessions remain respected. Ultrafast still requires sign-in and an eligible model/account route; eligibility and actual served tier remain unknown. Finite SSE and Task pause remain unchanged; no measured speed multiplier or real-account/Desktop acceptance is claimed.
-
-**Historical maintenance release:** [`0.2.0-alpha.8`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.8) adds explicit conversation Standard / Fast / Ultrafast selection, preserves the Host retry policy, sets the GPT-6.1 Sol context default to 500,000 tokens, and repairs recovery/file identity and Windows packaging checks. Ultrafast remains opt-in for the two documented Codex model IDs; defaults for new main/subagent conversations are not included. Eligibility and the actual served tier remain unknown; finite SSE and existing opt-in defaults are retained. No measured speed or real-account/Desktop acceptance is claimed.
-
-**Historical image-recovery release:** [`0.2.0-alpha.7`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.7) retains completed, validated originals when Harness preview saving fails, with original download and explicit continued editing. Tool help clarifies that chat can stay on DeepSeek while Codex Connect handles images through its separate ChatGPT OAuth lane. Its eleven original exact host pairings remain verified; the underlying image interface and credentials are unchanged. Synthetic checks do not establish real-account or Desktop acceptance.
-
-`0.2.0-alpha.4` extends exact host support to DSH `0.2.1-alpha.2` and `0.2.1-alpha.3`, retaining the previous five hosts. Existing supported hosts do not require an upgrade; Task remains paused and defaults are unchanged.
-
-**Historical maintenance release:** [`0.2.0-alpha.5`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.5) delivers exact DSH `0.2.1-alpha.4`, `0.2.1-alpha.5` and `0.2.1-rc.1` support plus Host/browser runtime-identity diagnostics, retaining the seven previously published hosts. Diagnostics share one version policy. Publication and keyless verification do not establish new real-account, Desktop or authenticated-browser acceptance; #339 remains open for separate acceptance.
-
-Historical release [`0.2.0-alpha.3`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.3.md) adds official Desktop sign-in compatibility and Desktop-specific account diagnostics while preserving the Web flow. Desktop uses its own profile and bundled CLI; follow the [Desktop installation instructions](INSTALL.md#official-desktop). The declared host versions, defaults and account storage are unchanged.
-
-Historical release [`0.2.0-alpha.2`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.2.md) publishes exact DSH `0.2.1-alpha.1` compatibility and the cross-route image selection handle repair. The earlier `0.2.0-alpha.1` artifact remains unchanged and rejects that host. Existing supported hosts do not require an upgrade.
-
-As of 2026-11-04, npm `alpha` points to `0.2.0-alpha.12`, while `latest` remains `0.2.0-alpha.10`. Those are upstream's package and upstream's dist-tags, not this fork's; this fork's `alpha` carries `0.3.1-alpha.2`. Default installation of the upstream package therefore selected Alpha 10, and a moving npm tag is not a compatibility guarantee for other hosts.
-
-Historical release [`0.2.0-alpha.1`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.1.md) adds `gpt-6.1-sol` through a model-catalog fallback and begins the shorter independent plugin numbering. The four supported DSH versions are unchanged; no host upgrade is required.
-
-It retains Alpha 4.54's handling of initial system instructions and tool definitions on DSH 0.2.0-rc.2, diagnostics for differing host/plugin provider libraries, and Canary's normal-request checks, along with Alpha 4.53's core maintenance changes, existing-task recovery and safety, and 4.52's [opt-in local request metrics](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/request-metrics.md). Collection stays off until a private directory is configured; unknown usage is not zero. No Task reopening or model-library/OAuth upgrade is included.
-
-The upstream package passed keyless installation/runtime regression on all fifteen exact DSH versions above. Task controls remain paused: activation is rejected and existing current-host browser regressions show no controls in fresh Sessions. These checks do not establish live OAuth, real-account image editing, authenticated browser acceptance on the new host, or full user acceptance; migration of earlier Task grants across a Harness upgrade is not verified. Older supported pairings and their task behavior are documented in [Installation and upgrades](INSTALL.md).
-
-Historically, on 2026-10-10 the maintainer reported successful login and normal use on Desktop `0.2.0-rc.2` with the identified local adaptation build. Only the historical `0.2.0-alpha.3` client was compared with that local adaptation and found to differ only by the package-version string. This comparison does not establish `0.2.0-alpha.4` Desktop or live-account acceptance, nor acceptance of later npm artifacts; no new real Desktop acceptance was performed. See the [Desktop acceptance record](INSTALL.md#official-desktop).
+This package is `dsh-chatgpt-connect`. Its ancestor is a **different npm package**, `dsh-codex-connect`,
+published upstream; installing that one does not install this fork, and this fork does not inherit its
+release history. The per-release historical record — older host pairings, dates, and what each older release
+changed — lives in [INSTALL.md](INSTALL.md) and `docs/release-notes/` in the repository, not here.

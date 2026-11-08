@@ -6,13 +6,17 @@ Codex Connect versions identify plugin releases independently of DeepSeek Harnes
 
 ## Release identity and phase
 
-The current release series starts at `0.2.0-alpha.1` and continues as `0.2.0-alpha.N`. This maintainer-approved numbering cleanup replaces the longer `0.1.0-alpha.4.x` sequence for new releases. It simplifies the independent plugin version; it does not narrow DSH compatibility, require a host upgrade, or promote the plugin to Beta or stable. Published versions and tags keep their original names and contents. A DSH update does not reset the plugin counter.
+The current release series is `0.3.1-alpha.N`; it starts at `0.3.1-alpha.1`, the first version published from this fork. Both earlier series are history and are not extended: `0.2.0-alpha.1` opened the shorter independent numbering, and it in turn replaced the longer `0.1.0-alpha.4.x` sequence. Numbering lines are deliberately never rewritten — a published version and its tag keep their original name and contents permanently. A DSH update does not reset the plugin counter.
 
 The publishing workflow accepts `MAJOR.MINOR.PATCH-alpha.NUMBER[.NUMBER…]`, with nonnegative integer components and no leading zeroes. Build metadata is not a release counter: SemVer ignores `+build.n` when comparing versions, and the pinned npm publishing implementation removes it. Use a distinct, higher-precedence version for every new package. Never overwrite a published package or move its release tag to different content.
 
 The plugin's public behavior includes configuration, tools, commands, and stored data. In the `0.y.z` development period, incompatible changes require explicit release notes and migration guidance; intentionally starting a new incompatible release line increments the plugin minor version. Routine iterations within the current Alpha line increment its prerelease counter. Copying a host's version is not a substitute for deciding the plugin's change scope.
 
 Alpha, Beta, RC, and a non-prerelease version describe the plugin's readiness, not DSH's. Phase promotion is a separate maintainer decision backed by recorded verification, including real-account and upgrade acceptance where relevant. A stable DSH release does not make the plugin stable. The current workflow remains Alpha-only; Beta, RC, and stable publishing need a separately reviewed workflow/channel change.
+
+## Numbering history: this fork's `0.3.1` Alpha line
+
+This fork publishes a different package (`dsh-chatgpt-connect`), so it does not continue upstream's `0.2.0-alpha.N` counter. Its own line is `0.3.1-alpha.N`, whose first publication is `0.3.1-alpha.1`. Routine iterations inside this line increment the prerelease counter; starting a new incompatible release line still increments the plugin minor version, exactly as described above. The upstream migration sections below are kept as history and are not renumbered.
 
 ## Compatibility evidence
 

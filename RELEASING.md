@@ -7,13 +7,12 @@ file, and the `npm-release` environment. The workflow uses no long-lived npm
 token and does not promote the `latest` dist-tag.
 
 Numbering, compatibility evidence, and channel policy are defined in
-[VERSIONING.md](VERSIONING.md). The approved independent numbering migration
-starts at `0.2.0-alpha.1`; later releases use `0.2.0-alpha.N`. It preserves the
-four declared DSH targets, Alpha-only gates, and separate `latest` policy.
-It is not a Beta/stable promotion or a requirement to upgrade DSH. The first
-release published from this fork is `0.3.1-alpha.1` on 2026-11-07; the
-`0.2.0-alpha.N` sequence above records the upstream-numbering migration and does
-not describe this fork's own release sequence.
+[VERSIONING.md](VERSIONING.md). This fork's release line is `0.3.1-alpha.N`; its
+first publication was `0.3.1-alpha.1` on 2026-11-07. Upstream's `0.2.0-alpha.N`
+line, which replaced the older `0.1.0-alpha.4.x` series, is history: a published
+version and its tag are never renumbered. The policy keeps Alpha-only gates and a
+separate `latest` policy, and it is not a Beta/stable promotion or a requirement
+to upgrade DSH.
 
 ## First publication (bootstrap order)
 

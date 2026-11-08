@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="iconTitle iconDesc">
+  <title id="iconTitle">ChatGPT Connect icon</title>
+  <desc id="iconDesc">An emerald speech bubble carrying a knocked-out chevron and a sky-blue prompt bar.</desc>
+  <rect width="512" height="512" rx="96" fill="#0F172A"/>
+  <path d="M160 104 H352 A64 64 0 0 1 416 168 V272 A64 64 0 0 1 352 336 H250 L162 392 L190 336 H160 A64 64 0 0 1 96 272 V168 A64 64 0 0 1 160 104 Z" fill="#10B981"/>
+  <path d="M200 176 L250 222 L200 268" fill="none" stroke="#0F172A" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M272 268 H322" fill="none" stroke="#38BDF8" stroke-width="26" stroke-linecap="round"/>
+</svg>

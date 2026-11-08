@@ -18,6 +18,15 @@ Read only the relevant additional material:
 Implement within the requested scope and validate the changed behavior. Use focused tests while iterating; run the full check for runtime changes before delivery. Documentation-only changes do not require repeating unrelated model or host matrices.
 Ordinary local synthetic fixtures are not live-account acceptance. Record exact source/runtime identity, command outcome and remaining limitations. Never reuse an old passing head as current evidence.
 
+## Clean up before you finish
+
+A plugin task is not finished while scratch files remain. Remove what the work produced and
+nothing else uses: temporary logs, matrix dumps, screenshots, probe output, downloaded
+artifacts and one-off helper scripts. Keep only evidence a later reader must be able to
+re-run, and keep it out of the repository when it is a record rather than a source file.
+Clean both the repository and the surrounding workspace. Leaving residue behind turns the
+next person's `git status` into a guessing game.
+
 ## Boundaries
 
 Keep experimental defaults off and preserve host-owned permissions, cancellation and durability. Prompts cannot grant authority.

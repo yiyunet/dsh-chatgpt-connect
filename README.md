@@ -9,9 +9,9 @@
 English | [中文](docs/README.zh.md)
 
 Connect your ChatGPT subscription to DeepSeek Harness over OAuth: Codex models inside the
-normal Harness agent loop, optional GPT Image generation and editing, user-controlled
-defaults, Harness-native approvals, quota display, diagnostics, and reliable session
-recovery.
+normal Harness agent loop, optional GPT Image generation and editing, an optional HTTP(S)
+proxy scoped to this plugin's traffic, user-controlled defaults, Harness-native approvals,
+quota display, diagnostics, and reliable session recovery.
 
 Community Alpha. This project is independent and is **not affiliated with, sponsored by, or
 endorsed by** OpenAI, ChatGPT, Codex, DeepSeek, or DeepSeek Harness.
@@ -120,6 +120,12 @@ is not proof of model access; an actual request requires separate authorization.
   separate profile settings can enable it for newly started top-level or subagent
   conversations without changing existing conversations. Actual speed and quota consumption
   depend on the service; no fixed speed multiplier is guaranteed.
+- **Network proxy.** Optional credential-free HTTP(S) proxy that applies only to this plugin's
+  traffic, including compressed OAuth and quota responses. Unrelated Fetch calls keep the
+  host's original transport, and a failed proxy request never silently retries directly. This
+  is the setting that makes the plugin usable behind a corporate egress, a local gateway, or
+  any network that cannot reach the provider directly. Enable it with `enableProxy`; the
+  exact behaviour is in the table below.
 - **Quota.** Show the server-returned `5h` and `7d` windows and reset times, normally refreshed
   every 60 seconds while signed in and the tab is visible; failures back off. Missing windows
   are not invented; Spark uses its separate quota bucket.

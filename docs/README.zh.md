@@ -8,7 +8,7 @@
 
 [English](../README.md) | 中文
 
-通过 OAuth 把你的 ChatGPT 订阅接入 DeepSeek Harness：在常规 Harness agent loop 中使用 Codex 模型，并提供可选的 GPT Image 图片生成与编辑、由用户控制的默认设置、Harness 原生审批、额度显示、诊断与可靠的会话恢复。
+通过 OAuth 把你的 ChatGPT 订阅接入 DeepSeek Harness：在常规 Harness agent loop 中使用 Codex 模型，并提供可选的 GPT Image 图片生成与编辑、**仅作用于本插件流量的可选 HTTP(S) 代理**、由用户控制的默认设置、Harness 原生审批、额度显示、诊断与可靠的会话恢复。
 
 社区 Alpha 项目。本项目独立维护，**与 OpenAI、ChatGPT、Codex、DeepSeek 或 DeepSeek Harness 不存在隶属关系，也未获得其赞助或背书。**
 
@@ -69,6 +69,7 @@ node /absolute/profile/node_modules/dsh-chatgpt-connect/lib/bin.js doctor --json
 - **账户**：在 DSH 主机上保存最多 16 个账户，手动选择后续请求使用的活动账户，不按会话绑定。请求保持已固定的账户，插件不会自动轮换或静默故障切换。
 - **模型与 Astra 支持**：当前已验证的 DSH 与插件组合支持 `gpt-6-astra`。插件补充缺失的模型定义，提供 Low、Medium、High、Xhigh 和 Max 五档推理强度；Default 保持提供方默认值。已保存的 Off/Minimal 选择需要[明确更新](../MIGRATION.md#astra-reasoning-selections)。安装的依赖目录包含 Astra 时，插件保留其原生元数据，同时维持这五档已校准的推理选择。模型出现在列表中，不代表当前账户具有调用权限。
 - **Fast Mode**：为单个对话请求优先服务，默认关闭。可分别为新建主对话和新建子代理对话启用默认值，不改变已有对话。实际速度和额度消耗取决于服务端，不保证固定提速倍数。
+- **网络代理**：可选的无凭据 HTTP(S) 代理，只作用于本插件流量（含压缩的 OAuth 与额度响应）。无关 Fetch 请求仍走宿主原传输方式；代理失败不会静默改直连。适用于企业出口、本地网关，或任何无法直连服务端的网络环境。启用字段 `enableProxy`，完整行为见下表。
 - **额度**：显示服务端返回的 `5h`、`7d` 窗口及重置时间，已登录且标签页可见时通常每 60 秒刷新一次；失败后延长重试间隔。不虚构缺失窗口；Spark 使用独立额度桶。
 - **插件更新**：本分支关闭面板内的更新检查。它不访问任何 registry，只报告信息不可用，也不会据此建议更改 DSH。
 

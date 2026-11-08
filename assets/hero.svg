@@ -30,14 +30,16 @@
     <text x="970" y="240" font-size="19" font-weight="600" fill="#E2E8F0">DeepSeek Harness</text>
     <text x="970" y="268" font-size="14" fill="#94A3B8">agent loop · approvals</text>
 
-    <rect x="120" y="340" width="236" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
-    <text x="238" y="373" text-anchor="middle" font-size="18" fill="#E2E8F0">Codex models</text>
-    <rect x="388" y="340" width="236" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
-    <text x="506" y="373" text-anchor="middle" font-size="18" fill="#E2E8F0">Image editing</text>
-    <rect x="656" y="340" width="236" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
-    <text x="774" y="373" text-anchor="middle" font-size="18" fill="#E2E8F0">Quota</text>
-    <rect x="924" y="340" width="236" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
-    <text x="1042" y="373" text-anchor="middle" font-size="18" fill="#E2E8F0">Recovery</text>
+    <rect x="120" y="340" width="188" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
+    <text x="214" y="372" text-anchor="middle" font-size="16" fill="#E2E8F0">Codex models</text>
+    <rect x="333" y="340" width="188" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
+    <text x="427" y="372" text-anchor="middle" font-size="16" fill="#E2E8F0">Image editing</text>
+    <rect x="546" y="340" width="188" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
+    <text x="640" y="372" text-anchor="middle" font-size="16" fill="#E2E8F0">Quota</text>
+    <rect x="759" y="340" width="188" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
+    <text x="853" y="372" text-anchor="middle" font-size="16" fill="#E2E8F0">Recovery</text>
+    <rect x="972" y="340" width="188" height="52" rx="26" fill="#0B1220" stroke="#1F2937" stroke-width="2"/>
+    <text x="1066" y="372" text-anchor="middle" font-size="16" fill="#E2E8F0">HTTP(S) proxy</text>
 
     <text x="640" y="436" text-anchor="middle" font-size="13" fill="#64748B">Community Alpha · not affiliated with OpenAI, ChatGPT, Codex, DeepSeek, or DeepSeek Harness</text>
   </g>

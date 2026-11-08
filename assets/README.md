@@ -6,7 +6,7 @@ Hand-authored SVG. No raster source, no tracing step, no upstream artwork.
 
 | File | viewBox | Used for |
 |---|---|---|
-| `hero.svg` | `0 0 1280 480` | README top banner (8:3). Shows the whole promise in one frame: a ChatGPT subscription card, an OAuth sign-in capsule, a DeepSeek Harness card, and four capability chips. |
+| `hero.svg` | `0 0 1280 480` | README top banner (8:3). Shows the whole promise in one frame: a ChatGPT subscription card, an OAuth sign-in capsule, a DeepSeek Harness card, and five capability chips. |
 | `icon.svg` | `0 0 512 512` | Square mark; must stay readable at 32×32 |
 | `wordmark.svg` | `0 0 760 160` | Bubble mark plus the product name |
 

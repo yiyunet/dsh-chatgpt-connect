@@ -40,7 +40,11 @@ exact version, which is what keeps both consequences harmless.
 
 ## Building `lib/` for a release
 
-`lib/` is committed and must match the artifact CI verifies. Build it on Linux:
+`lib/` is committed and must match the artifact CI verifies. **Any change to
+`package.json.version` changes `lib/`**: the version constant is embedded in
+`lib/bin.js`, `lib/index.js` and `lib/client.js`. Bump the version and rebuild in
+the same release, or the committed-output check fails on an otherwise clean
+commit. Build it on Linux:
 run the `rebuild-lib.yml` workflow, download the `lib-linux` artifact, and copy
 its files over `lib/`. Building the same sources on Windows produces different
 bytes, because bundled dependencies resolve differently, and the `Verify

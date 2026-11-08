@@ -1,5 +1,7 @@
 # dsh-chatgpt-connect
 
+![ChatGPT Connect — your ChatGPT subscription inside DeepSeek Harness](https://raw.githubusercontent.com/yiyunet/dsh-chatgpt-connect/main/assets/hero.svg)
+
 [![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 [![license](https://img.shields.io/npm/l/dsh-chatgpt-connect?color=blue)](LICENSE)
 [![node](https://img.shields.io/node/v/dsh-chatgpt-connect)](package.json)
@@ -14,7 +16,7 @@ recovery.
 Community Alpha. This project is independent and is **not affiliated with, sponsored by, or
 endorsed by** OpenAI, ChatGPT, Codex, DeepSeek, or DeepSeek Harness.
 
-**Fork status — `0.3.1-alpha.1`, published 2026-11-07 on the npm `alpha` dist-tag through
+**Fork status — `0.3.1-alpha.2`, published 2026-11-07 on the npm `alpha` dist-tag through
 Trusted Publishing.** This is the self-maintained fork of
 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect), which
 derives from [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex). The package and the
@@ -47,7 +49,7 @@ route, and it does not turn a ChatGPT subscription into an OpenAI Platform API k
 
 | Requirement | Value |
 |---|---|
-| Plugin | `dsh-chatgpt-connect@0.3.1-alpha.1` |
+| Plugin | `dsh-chatgpt-connect@0.3.1-alpha.2` |
 | DeepSeek Harness | Declared range `>=0.1.7-rc.1 <0.3.0`. This version is reported `compatible` only on the fifteen hosts verified for it: `0.1.7-rc.1`, `0.1.7-rc.2`, `0.2.0-rc.1`, `0.2.0-rc.2`, `0.2.1-alpha.1`, `0.2.1-alpha.2`, `0.2.1-alpha.3`, `0.2.1-alpha.4`, `0.2.1-alpha.5`, `0.2.1-rc.1`, `0.2.1-rc.2`, `0.2.1-rc.3`, `0.2.1-rc.4`, `0.2.1-rc.5`, `0.2.2-alpha.3`. Any other Host inside the declared range is reported `unverified`, never asserted as working. |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
 | Account | ChatGPT OAuth with access to the requested Codex model; availability is decided by OpenAI |
@@ -63,7 +65,7 @@ downgrade Harness merely to match a row.
 ### 1. Install
 
 ```sh
-dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.1
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.2
 dsh web
 ```
 
@@ -331,7 +333,7 @@ Historical release [`0.2.0-alpha.3`](https://github.com/yiyunet/dsh-chatgpt-conn
 
 Historical release [`0.2.0-alpha.2`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.2.md) publishes exact DSH `0.2.1-alpha.1` compatibility and the cross-route image selection handle repair. The earlier `0.2.0-alpha.1` artifact remains unchanged and rejects that host. Existing supported hosts do not require an upgrade.
 
-As of 2026-11-04, npm `alpha` points to `0.2.0-alpha.12`, while `latest` remains `0.2.0-alpha.10`. Those are upstream's package and upstream's dist-tags, not this fork's; this fork's `alpha` carries `0.3.1-alpha.1`. Default installation of the upstream package therefore selected Alpha 10, and a moving npm tag is not a compatibility guarantee for other hosts.
+As of 2026-11-04, npm `alpha` points to `0.2.0-alpha.12`, while `latest` remains `0.2.0-alpha.10`. Those are upstream's package and upstream's dist-tags, not this fork's; this fork's `alpha` carries `0.3.1-alpha.2`. Default installation of the upstream package therefore selected Alpha 10, and a moving npm tag is not a compatibility guarantee for other hosts.
 
 Historical release [`0.2.0-alpha.1`](https://github.com/yiyunet/dsh-chatgpt-connect/blob/main/docs/release-notes/0.2.0-alpha.1.md) adds `gpt-6.1-sol` through a model-catalog fallback and begins the shorter independent plugin numbering. The four supported DSH versions are unchanged; no host upgrade is required.
 

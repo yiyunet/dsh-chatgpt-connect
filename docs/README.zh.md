@@ -1,5 +1,7 @@
 # dsh-chatgpt-connect
 
+![ChatGPT Connect —— 把你的 ChatGPT 订阅接进 DeepSeek Harness](https://raw.githubusercontent.com/yiyunet/dsh-chatgpt-connect/main/assets/hero.svg)
+
 [![npm version](https://img.shields.io/npm/v/dsh-chatgpt-connect/alpha?label=npm%20alpha&color=cb3837)](https://www.npmjs.com/package/dsh-chatgpt-connect)
 [![license](https://img.shields.io/npm/l/dsh-chatgpt-connect?color=blue)](../LICENSE)
 [![node](https://img.shields.io/node/v/dsh-chatgpt-connect)](../package.json)
@@ -10,7 +12,7 @@
 
 社区 Alpha 项目。本项目独立维护，**与 OpenAI、ChatGPT、Codex、DeepSeek 或 DeepSeek Harness 不存在隶属关系，也未获得其赞助或背书。**
 
-**本分支状态 —— 版本 `0.3.1-alpha.1`，已于 2026-11-07 通过 Trusted Publishing 发布到 npm 的 `alpha` 标签。** 它是 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect) 的自维护分支，后者又派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex)。包名与 CLI 名均为 `dsh-chatgpt-connect`；设置面板标题为 **ChatGPT Connect**。上游自己的发布记录原样保留在本文末尾，仍使用旧包名。
+**本分支状态 —— 版本 `0.3.1-alpha.2`，已于 2026-11-07 通过 Trusted Publishing 发布到 npm 的 `alpha` 标签。** 它是 [franksong2702/dsh-codex-connect](https://github.com/franksong2702/dsh-codex-connect) 的自维护分支，后者又派生自 [Yan-Zero/dsh-codex](https://github.com/Yan-Zero/dsh-codex)。包名与 CLI 名均为 `dsh-chatgpt-connect`；设置面板标题为 **ChatGPT Connect**。上游自己的发布记录原样保留在本文末尾，仍使用旧包名。
 
 本分支相对上游的改动：
 
@@ -25,7 +27,7 @@ Codex Connect 为标准 Harness agent loop 添加 `openai-codex` 模型提供方
 
 | 要求 | 取值 |
 |---|---|
-| 插件 | `dsh-chatgpt-connect@0.3.1-alpha.1` |
+| 插件 | `dsh-chatgpt-connect@0.3.1-alpha.2` |
 | DeepSeek Harness | 声明区间 `>=0.1.7-rc.1 <0.3.0`。本版本仅在实测过的十五个宿主上报告 `compatible`：`0.1.7-rc.1`、`0.1.7-rc.2`、`0.2.0-rc.1`、`0.2.0-rc.2`、`0.2.1-alpha.1`、`0.2.1-alpha.2`、`0.2.1-alpha.3`、`0.2.1-alpha.4`、`0.2.1-alpha.5`、`0.2.1-rc.1`、`0.2.1-rc.2`、`0.2.1-rc.3`、`0.2.1-rc.4`、`0.2.1-rc.5`、`0.2.2-alpha.3`。区间内其余宿主一律报告 `unverified`，不声称可用。 |
 | Node.js | `^22.19.0 \|\| >=24.0.0` |
 | 账户 | 通过 ChatGPT OAuth 使用所请求的 Codex 模型；可用性由 OpenAI 决定 |
@@ -37,7 +39,7 @@ Codex Connect 为标准 Harness agent loop 添加 `openai-codex` 模型提供方
 ### 1. 安装
 
 ```sh
-dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.1
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.2
 dsh web
 ```
 
@@ -197,7 +199,7 @@ Codex Connect 原始工作 Copyright 2026 Frank Song；本分支的修改与新�
 
 历史发布 [`0.2.0-alpha.2`](release-notes/0.2.0-alpha.2.md) 已发布精确 DSH `0.2.1-alpha.1` 的兼容适配，以及跨模型路由的图片选择句柄修复。较早的 `0.2.0-alpha.1` 安装包保持不变，仍拒绝该宿主。原有受支持宿主无需升级。
 
-截至 2026-11-04，npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`，因此默认安装仍选择 Alpha 10；会移动的 npm tag 不保证其他宿主版本的兼容性。这是上游的包与上游的标签状态，本分支的 `alpha` 是 `0.3.1-alpha.1`。
+截至 2026-11-04，npm `alpha` 指向 `0.2.0-alpha.12`，`latest` 保持 `0.2.0-alpha.10`，因此默认安装仍选择 Alpha 10；会移动的 npm tag 不保证其他宿主版本的兼容性。这是上游的包与上游的标签状态，本分支的 `alpha` 是 `0.3.1-alpha.2`。
 
 历史发布 [`0.2.0-alpha.1`](release-notes/0.2.0-alpha.1.md) 通过模型目录补充增加 `gpt-6.1-sol`，并开始较短的独立插件编号。四个受支持的 DSH 版本不变，无需升级宿主。
 

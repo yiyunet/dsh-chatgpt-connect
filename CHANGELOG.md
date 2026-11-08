@@ -4,6 +4,28 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.1-alpha.2 — 2026-11-07
+
+Documentation and packaging release. One real defect fixed; everything else is facade work.
+
+- **Fixed: the in-panel agent upgrade prompt named the wrong repository.** It pointed at the
+  upstream project, so asking the agent to help with an upgrade sent users to a *different*
+  npm package. `src/update.ts` already built its release link from this fork, so one feature
+  disagreed with itself. The localStorage cache and dismissal keys keep the upstream name on
+  purpose: they are persisted identifiers, and renaming them drops saved dismissals.
+- **The README facade is rebuilt to a fixed order** and the hand-authored SVG asset set now
+  ships in the package: a hero banner, an app icon, a wordmark, and `assets/README.md` with
+  the palette, the edit rules and the non-official notice.
+- **`CHANGELOG.md` is part of the package**, including the known-limitations section below.
+- **`VERSIONING.md` and its Chinese counterpart now name `0.3.1-alpha.N`** as this fork's
+  release line. The upstream `0.2.0-alpha.N` and `0.1.0-alpha.4.x` sections stay as history,
+  because a published version and its tag are never renumbered.
+- **`INSTALL.md`, `MIGRATION.md` and `RELEASING.md`** record the first-publication bootstrap
+  order, the Linux `lib/` build rule, and the fact that this package's manifest carries no
+  `gitHead` — the SLSA provenance attestation is the artifact-to-commit link instead.
+- **Removed the unused `src/host-seam-probe.ts`.** Nothing imported it and it was never a
+  build entry, so the published artifact is unchanged by the removal.
+
 ## 0.3.1-alpha.1 — 2026-11-07
 
 First release published from this fork. Package and CLI are both `dsh-chatgpt-connect`.

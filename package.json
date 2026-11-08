@@ -2,7 +2,7 @@
   "name": "dsh-chatgpt-connect",
   "displayName": "ChatGPT Connect",
   "description": "ChatGPT OAuth and Codex models for DeepSeek Harness.",
-  "version": "0.3.1-alpha.2",
+  "version": "0.3.1-alpha.3",
   "author": "Frank Song",
   "contributors": [
     "Yan-Zero (original dsh-codex author)"

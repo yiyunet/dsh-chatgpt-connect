@@ -4,7 +4,27 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
-## 0.3.1-alpha.2 — 2026-11-07
+## 0.3.1-alpha.3 — 2026-11-08
+
+Documentation and release-gate release. No runtime behaviour changed.
+
+- **Install by the bare package name.** The README now recommends
+  `dsh plugin --profile web add dsh-chatgpt-connect` with no version and no tag, so a release no
+  longer edits it. `latest` on npm now points at the published Alpha, which is what makes the bare
+  install resolve to a real package instead of the `0.0.0` name-reservation placeholder.
+- **State the bounded range instead of listing hosts.** Harness `>=0.1.7-rc.1 <0.3.0` loads the
+  plugin; whether a host is `compatible` or `unverified` is a separately recorded verdict in
+  `compatibility.json`. That is the reason this fork exists, so the README stops copying the list.
+- **Document the proxy panel as it behaves**: off by default, detect or configure manually, and
+  activation requires a successful test of that exact address.
+- **Add a day-to-day flow and a settings walkthrough**, drop the table of contents, remove the
+  `dsh web` step from routine use, and remove the upstream-history appendix — the licence section
+  already carries the provenance.
+- **Move the exact-version requirement from the README into `INSTALL.md`.** The release-gate check
+  now requires one bare command in each README, one exact Alpha version in `INSTALL.md` that is not
+  newer than the candidate, and a V1-shaped compatibility catalog.
+
+## 0.3.1-alpha.2 — 2026-11-08
 
 Documentation and packaging release. One real defect fixed; everything else is facade work.
 

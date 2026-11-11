@@ -2,14 +2,19 @@
  * Direction guard for the capability gate that keeps the frozen Adaptive Task layer off hosts
  * which removed `AgentRegistry.roots()` / `isOwnedBy()`.
  *
- * An inverted gate would silently reproduce the original failure, so each direction is pinned.
+ * Two failure shapes must not be confused:
+ *  - a host without `agents` or `sessions` — the existing paths already answer `TASK_LIVE_ROOT_REQUIRED`;
+ *  - a host that provides both services but removed a registry member — only this gate catches it.
+ * An inverted or over-eager gate silently reproduces the original failure, so both are pinned here.
  */
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import { hostSupportsAdaptiveTask } from '../src/adaptive-task-host-support.ts'
 
-function contextWith(agents: unknown): Context {
-  return { get: (name: string) => (name === 'agents' ? agents : undefined) } as unknown as Context
+function contextWith(agents: unknown, sessions: unknown = {}): Context {
+  return {
+    get: (name: string) => (name === 'agents' ? agents : name === 'sessions' ? sessions : undefined),
+  } as unknown as Context
 }
 
 describe('hostSupportsAdaptiveTask', () => {
@@ -22,7 +27,8 @@ describe('hostSupportsAdaptiveTask', () => {
   it('rejects a registry that dropped isOwnedBy()', () => {
     expect(hostSupportsAdaptiveTask(contextWith({ roots() {} }))).toBe(false)
   })
-  it('rejects a host without an agent registry', () => {
-    expect(hostSupportsAdaptiveTask(contextWith(undefined))).toBe(false)
+  it('leaves a host without task services to the existing TASK_LIVE_ROOT_REQUIRED contract', () => {
+    expect(hostSupportsAdaptiveTask(contextWith(undefined))).toBe(true)
+    expect(hostSupportsAdaptiveTask(contextWith({ roots() {}, isOwnedBy() {} }, undefined))).toBe(true)
   })
 })

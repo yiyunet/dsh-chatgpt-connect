@@ -11,12 +11,16 @@ import type { Context } from '@deepseek-ai/cordis'
 const REQUIRED_REGISTRY_MEMBERS = ['roots', 'isOwnedBy'] as const
 
 /**
- * Report whether the running host still exposes every registry member Adaptive Task relies on.
- * Missing `agents` is also reported as unsupported: the task layer has never worked without it.
+ * Report whether Adaptive Task can run: every registry member it calls is still a function.
+ *
+ * A host that provides neither `agents` nor `sessions` is reported as supported on purpose. That
+ * shape is not "a newer host removed an API" — it is a host without the task services, and the
+ * existing paths already answer it with `TASK_LIVE_ROOT_REQUIRED`. Judging it here would replace a
+ * more specific, already-tested failure with a vaguer one.
  */
 export function hostSupportsAdaptiveTask(ctx: Context): boolean {
   const agents = ctx.get('agents')
-  if (agents === undefined) return false
+  if (agents === undefined || ctx.get('sessions') === undefined) return true
   const registry = agents as unknown as Record<string, unknown>
   return REQUIRED_REGISTRY_MEMBERS.every(member => typeof registry[member] === 'function')
 }

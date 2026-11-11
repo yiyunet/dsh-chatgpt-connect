@@ -16,7 +16,8 @@ proxy behaviour changed.
 - **The task layer detects those members at call time.** Elsewhere the provider, model picker, image
   lane, quota tool and scoped proxy keep working, the task routes stay registered so unauthenticated
   callers still receive 401 rather than 404, and every task entry point answers with an explicit
-  `TASK_HOST_UNSUPPORTED` failure instead of calling a missing member. Detection runs per call
+  `TASK_HOST_UNSUPPORTED` failure instead of calling a missing member, while a host that merely
+  lacks the task services keeps its existing `TASK_LIVE_ROOT_REQUIRED` answer. Detection runs per call
   because the agent registry is not resolved yet while the plugin is being applied — an earlier
   assembly-time probe turned that 401 into a 404 and was caught by the declared-host install matrix.
   A unit test pins both directions of the gate, because an inverted gate would reproduce the original

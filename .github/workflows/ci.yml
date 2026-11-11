@@ -121,7 +121,12 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm --config.minimum-release-age=0 install --frozen-lockfile
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        # The apt mirrors that serve the optional font packages are occasionally unreachable from
+        # the runner. Chromium's own system libraries are already present on this image, and every
+        # browser assertion here matches text rather than rendered glyphs, so a failed dependency
+        # fetch must not decide the whole pipeline. Keep --with-deps as best effort, then install
+        # the browser alone instead of failing the job.
+        run: pnpm exec playwright install --with-deps chromium || pnpm exec playwright install chromium
       - name: Run browser UI regression tests
         run: pnpm run test:browser
       - name: Verify authenticated task controls and model handoff

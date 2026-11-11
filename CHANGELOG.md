@@ -13,10 +13,14 @@ proxy behaviour changed.
   The frozen Adaptive Task layer still called `AgentRegistry.roots()` and `isOwnedBy()`, which newer
   hosts no longer expose, and it did so from an `agent/request` hook registered with `prepend: true`
   — so the failure landed on every request instead of at startup.
-- **The task layer is now assembled only on hosts that still expose both members.** Elsewhere the
-  provider, model picker, image lane, quota tool and scoped proxy keep working, the task HTTP route
-  is not registered, and no path reaches the removed APIs. A unit test pins both directions of the
-  gate, because an inverted gate would reproduce the original failure silently.
+- **The task layer detects those members at call time.** Elsewhere the provider, model picker, image
+  lane, quota tool and scoped proxy keep working, the task routes stay registered so unauthenticated
+  callers still receive 401 rather than 404, and every task entry point answers with an explicit
+  `TASK_HOST_UNSUPPORTED` failure instead of calling a missing member. Detection runs per call
+  because the agent registry is not resolved yet while the plugin is being applied — an earlier
+  assembly-time probe turned that 401 into a 404 and was caught by the declared-host install matrix.
+  A unit test pins both directions of the gate, because an inverted gate would reproduce the original
+  failure silently.
 - **This is a stopgap.** On such hosts the task layer stays unavailable rather than being ported.
   The durable fix derives both helpers from `AgentRegistry.list()` plus `session.header.parentSession`
   so the layer works on every supported host; that change is scheduled next.

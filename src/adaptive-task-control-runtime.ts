@@ -2,6 +2,7 @@ import { assertTaskHostAutomation, taskHostRecoveryOnly, TASK_HOST_RECOVERY_ONLY
 /** Default-off composition: v1 main-task grants and explicitly upgraded v2 roots have one owner. */
 import { randomUUID } from 'node:crypto'
 import { withAdaptiveTaskProvider } from './adaptive-task-scope.ts'
+import { hostSupportsAdaptiveTask } from './adaptive-task-host-support.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { GenerateOptions, StreamChunk } from '@deepseek-ai/dsh-llm'
@@ -20,6 +21,15 @@ import { TaskDelegationHost, taskHostServices } from './adaptive-task-delegation
 import { TaskEvidenceManifest } from './adaptive-task-evidence.ts'
 import type { TaskDelegationArtifacts } from './adaptive-task-artifacts.ts'
 import { AdaptiveTaskTransitions } from './adaptive-task-transitions.ts'
+
+/**
+ * A host that removed `AgentRegistry.roots()` / `isOwnedBy()` has no task layer. Every entry point
+ * fails explicitly instead of calling a missing member, and probing happens at call time because the
+ * agent registry is not resolved yet while the plugin is being applied.
+ */
+function assertTaskHostSupported(ctx: Context): void {
+  if (!hostSupportsAdaptiveTask(ctx)) throw new Error('TASK_HOST_UNSUPPORTED')
+}
 
 export interface TaskControlOptions {
   directory: string
@@ -88,6 +98,7 @@ export class AdaptiveTaskControlRuntime {
   }
   /** Both durable ancestry and actual live ownership route descendants to the rejecting executor. */
   private async managed(agent: Agent): Promise<boolean> {
+    if (!hostSupportsAdaptiveTask(this.ctx)) return false
     for (const root of this.agents.roots()) {
       let current: Agent | undefined = agent
       const visited = new Set<string>()
@@ -103,16 +114,21 @@ export class AdaptiveTaskControlRuntime {
     return false
   }
   async *stream(options: GenerateOptions, delegate: (options: GenerateOptions) => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk> {
+    // Without the task layer the raw provider stream is the only correct path: the legacy runtime
+    // would also call the removed members.
+    if (!hostSupportsAdaptiveTask(this.ctx)) { yield* delegate(options); return }
     const agent = options.sessionId === undefined ? undefined : this.ctx.get('agents')?.get(options.sessionId)
     yield* (agent !== undefined && await this.managed(agent) ? this.execution : this.legacy).stream(options, delegate)
   }
   async reserveAuxiliary(): Promise<void> {
+    if (!hostSupportsAdaptiveTask(this.ctx)) return
     const registry = this.ctx.get('agents')
     const agent = typeof registry?.currentInitiator === 'function' && typeof registry.get === 'function'
       ? registry.currentInitiator() : undefined
     await (agent !== undefined && await this.managed(agent) ? this.execution : this.legacy).reserveAuxiliary()
   }
   async state(sessionId: string, principal: string): Promise<AdaptiveTaskState> {
+    assertTaskHostSupported(this.ctx)
     const parent = this.root(sessionId)
     const stored = await this.authorized(parent, principal)
     if (stored?.version !== 2) {
@@ -141,6 +157,7 @@ export class AdaptiveTaskControlRuntime {
           delivery: run.delivery, reserved: run.attempts.length })) } }
   }
   async command(value: AdaptiveTaskCommand, principal: string): Promise<AdaptiveTaskState> {
+    assertTaskHostSupported(this.ctx)
     const command = structuredClone(value)
     if (decodeTaskCommand(command) === undefined) taskFailure('TASK_COMMAND_INVALID')
     const previous = this.commands.get(command.sessionId) ?? Promise.resolve()

@@ -185,7 +185,7 @@ Alpha 4.33 omits the `modelErrors` profile field required by RC model packages, 
 **This fork — `dsh-chatgpt-connect@0.3.1-alpha.1`, published 2026-11-07 on the npm `alpha` dist-tag.** The exact-version commands further down target the **previous package name** and do not install this fork; they are kept only to reproduce older upstream pairings.
 
 ```sh
-dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.4
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.1-alpha.5
 ```
 
 Always pass the exact version. npm's `latest` dist-tag still resolves to the

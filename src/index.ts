@@ -55,6 +55,7 @@ import { OpenAICodexProxyManager } from './provider-proxy.ts'
 import { OpenAICodexBackendRequests } from './backend-request.ts'
 import { RequestMetrics } from './request-metrics.ts'
 import { AdaptiveTaskControlRuntime } from './adaptive-task-control-runtime.ts'
+import { hostSupportsAdaptiveTask } from './adaptive-task-host-support.ts'
 import { reserveAdaptiveTaskAttempt } from './adaptive-task-scope.ts'
 import { TaskDelegationArtifacts } from './adaptive-task-artifacts.ts'
 import { taskIdentity } from './adaptive-task-store.ts'
@@ -454,16 +455,18 @@ export function apply(ctx: Context, config: Config | VolatileConfig): void {
   registerOpenAICodexFastModeDefaults(ctx, fastMode, () => resolveOpenAICodexSettings(current()),
     async () => (await credentials.accounts()).find(account => account.active)?.accountKey)
   const taskDirectory = join(dirname(credentials.filename), 'codex-connect-tasks')
-  taskRuntime = new AdaptiveTaskControlRuntime(ctx, {
-    directory: taskDirectory,
-    artifacts: identity => new TaskDelegationArtifacts(join(taskDirectory,
-      taskIdentity(JSON.stringify([identity.owner, identity.sessionKey])) + '-artifacts')),
-    models: async () => {
-      const models = await ctx.llm.listModels(OPENAI_CODEX_PROVIDER)
-      return Promise.all(models.filter(model => ADAPTIVE_TASK_MODELS.some(id => id === model.id))
-        .map(model => ctx.llm.resolveModelInfo(OPENAI_CODEX_PROVIDER, model.id)))
-    },
-  })
+  taskRuntime = hostSupportsAdaptiveTask(ctx)
+    ? new AdaptiveTaskControlRuntime(ctx, {
+      directory: taskDirectory,
+      artifacts: identity => new TaskDelegationArtifacts(join(taskDirectory,
+        taskIdentity(JSON.stringify([identity.owner, identity.sessionKey])) + '-artifacts')),
+      models: async () => {
+        const models = await ctx.llm.listModels(OPENAI_CODEX_PROVIDER)
+        return Promise.all(models.filter(model => ADAPTIVE_TASK_MODELS.some(id => id === model.id))
+          .map(model => ctx.llm.resolveModelInfo(OPENAI_CODEX_PROVIDER, model.id)))
+      },
+    })
+    : undefined
   const quota = new OpenAICodexQuotaState({
     credentials,
     proxyManager,
@@ -528,7 +531,8 @@ export function apply(ctx: Context, config: Config | VolatileConfig): void {
   })
 
   const tasks = taskRuntime
-  ctx.inject(['webServer', 'connection'], webCtx => { registerAdaptiveTaskHttp(webCtx, tasks) })
+  // Without the task layer there is no state to serve; skip the route instead of registering a dead one.
+  if (tasks !== undefined) ctx.inject(['webServer', 'connection'], webCtx => { registerAdaptiveTaskHttp(webCtx, tasks) })
 
   let stopped = false
   let searchFiber: Fiber | undefined

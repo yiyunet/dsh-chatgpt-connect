@@ -4,6 +4,26 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.1-alpha.5 — 2026-11-08
+
+Compatibility fix for DSH releases that removed two `AgentRegistry` members. No provider, image or
+proxy behaviour changed.
+
+- **Fixed: every model request failed on DSH 0.2.2-rc.2** with `this.agents.roots is not a function`.
+  The frozen Adaptive Task layer still called `AgentRegistry.roots()` and `isOwnedBy()`, which newer
+  hosts no longer expose, and it did so from an `agent/request` hook registered with `prepend: true`
+  — so the failure landed on every request instead of at startup.
+- **The task layer is now assembled only on hosts that still expose both members.** Elsewhere the
+  provider, model picker, image lane, quota tool and scoped proxy keep working, the task HTTP route
+  is not registered, and no path reaches the removed APIs. A unit test pins both directions of the
+  gate, because an inverted gate would reproduce the original failure silently.
+- **This is a stopgap.** On such hosts the task layer stays unavailable rather than being ported.
+  The durable fix derives both helpers from `AgentRegistry.list()` plus `session.header.parentSession`
+  so the layer works on every supported host; that change is scheduled next.
+- **Not addressed here:** `engines.dsh` still declares `>=0.1.7-rc.1 <0.3.0`, which is wider than
+  the versions this release was verified against. Narrowing it is part of the follow-up work, not
+  of this release.
+
 ## 0.3.1-alpha.4 — 2026-11-08
 
 Settings-path fix. Two locale strings changed; no other runtime behaviour differs.

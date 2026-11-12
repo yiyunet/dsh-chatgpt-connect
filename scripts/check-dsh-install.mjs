@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url'
 import { scrubCanaryEnvironment } from './canary-environment.mjs'
 import { runBoundedCommand } from './bounded-command.mjs'
 import { exactDshFixtureManifest, readDshRegistryManifest, resolveExactDshOverrides } from './exact-dsh-fixture.mjs'
+import { validHostContract } from './host-contract-members.mjs'
 
 const JSON_SCHEMA_VERSION = 1
 const DEFAULT_DSH_VERSION = '0.1.7-rc.1'
@@ -327,7 +328,8 @@ export async function checkDshInstall({ pluginManagerCandidate } = {}) {
       || runtimeReport['modelCount'] < 1
       || runtimeReport?.['reasoningModelCount'] !== runtimeReport['modelCount']
       || runtimeReport?.['preparedModelCount'] !== runtimeReport['modelCount']
-      || runtimeReport?.['disposalVerified'] !== true) {
+      || runtimeReport?.['disposalVerified'] !== true
+      || !validHostContract(runtimeReport?.['hostContract'])) {
       throw new CompatibilityCheckError('installed runtime contract returned an invalid report')
     }
     if (!validRetiredReserveReport(runtimeReport?.['reserveRetirement'])) {

@@ -14,6 +14,7 @@ import { checkInstalledTaskHttp } from './check-installed-task-http.mjs'
 import { checkInstalledPreflight } from './check-installed-preflight.mjs'
 import { checkInstalledStockReview } from './check-installed-stock-review.mjs'
 import { checkInstalledRetryPolicy } from './check-installed-retry-policy.mjs'
+import { AGENT_PACKAGE, readDeclaredRegistryMembers } from './host-contract-members.mjs'
 
 const JSON_SCHEMA_VERSION = 1
 const PROVIDER_ID = 'openai-codex'
@@ -62,6 +63,32 @@ export function validateRuntimeProjection(providers, models) {
   return { modelCount: models.length, reasoningModelCount }
 }
 
+/**
+ * Record which AgentRegistry members the installed host actually exposes.
+ *
+ * This is the runtime half of the host contract. A text scan can only see receivers spelled
+ * `agents` inside the task layer; this reads the host's own class instead, so a removal shows up as
+ * a matrix diff rather than a crash on first use.
+ *
+ * The record is evidence, not a requirement: a host that dropped a member is expected, and the
+ * plugin's capability gate decides what to do about it. Failing the installation matrix here would
+ * forbid exactly the hosts this plugin is designed to survive.
+ */
+export async function inspectAgentRegistrySurface(importHost) {
+  const module = await importHost(AGENT_PACKAGE)
+  const AgentRegistry = module?.AgentRegistry ?? module?.default
+  if (typeof AgentRegistry !== 'function') throw new Error(`${AGENT_PACKAGE} does not export the AgentRegistry class`)
+  const prototype = AgentRegistry.prototype
+  if (typeof prototype !== 'object' || prototype === null) throw new Error('AgentRegistry exposes no prototype to inspect')
+  const members = await readDeclaredRegistryMembers()
+  return {
+    package: AGENT_PACKAGE,
+    members,
+    present: members.filter(member => typeof prototype[member] === 'function'),
+    missing: members.filter(member => typeof prototype[member] !== 'function'),
+  }
+}
+
 /** Boot the installed plugin against one isolated DSH profile and inspect its runtime registration. */
 export async function checkInstalledRuntime(profilePackagePath, hostPackagePath = profilePackagePath) {
   const packagePath = resolve(profilePackagePath)
@@ -73,6 +100,7 @@ export async function checkInstalledRuntime(profilePackagePath, hostPackagePath 
       importHost('@deepseek-ai/dsh-llm-pi-ai'),
       importProfile('dsh-chatgpt-connect'),
     ])
+    const hostContract = await inspectAgentRegistrySurface(importHost)
     await ctx.plugin(LlmRuntime)
     await ctx.plugin(PiAiRuntime, {})
     const plugin = await ctx.plugin(OpenAICodex, {})
@@ -118,6 +146,7 @@ export async function checkInstalledRuntime(profilePackagePath, hostPackagePath 
       ...projection,
       preparedModelCount: models.length,
       disposalVerified: true,
+      hostContract,
       reserveRetirement,
       nativeCompactionLifecycle,
       images,

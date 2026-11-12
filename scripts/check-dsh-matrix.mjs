@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { validRetiredReserveReport } from './retired-reserve-report.mjs'
+import { validHostContract } from './host-contract-members.mjs'
 
 import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -54,6 +55,7 @@ export function validateDshMatrix(reports, versions, pluginVersion) {
       || report.runtime?.schemaVersion !== 1 || report.runtime?.provider !== 'openai-codex'
       || ['enableProxy', 'enableSearch', 'enableReserveFallback', 'enableNativeCompaction', 'enableImageTool', 'enableImageGeneration', 'enableAutoReview'].some(key => report.capabilities?.[key] !== false)
       || !Number.isInteger(report.runtime?.modelCount) || report.runtime.modelCount < 1
+      || !validHostContract(report.runtime?.hostContract)
       || report.runtime.reasoningModelCount !== report.runtime.modelCount
       || report.runtime.preparedModelCount !== report.runtime.modelCount) {
       throw new Error('DSH matrix contains an incomplete or mismatched install report')

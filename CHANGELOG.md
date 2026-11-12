@@ -4,6 +4,34 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.2 — 2026-11-13
+
+Host-compatibility hardening: the capability gate now covers the whole surface the frozen Adaptive
+Task layer calls, and the declared verification matrix finally includes the DSH releases this
+project exists to survive.
+
+- **The gate checks six registry members, not the two that had already been removed.** `0.3.1` asked
+  only whether `roots` and `isOwnedBy` existed. A host that removed `get`, `list`, `create` or
+  `currentInitiator` instead would still have been treated as healthy and crashed on first use, so
+  the surface now lives in one place (`src/host-contract.ts`) and the gate reports *which* members
+  are missing rather than a bare boolean.
+- **A drift check keeps that list honest in both directions.** `check:host-contract` fails when a
+  task-layer call site uses a member the contract omits, and also when the contract names a member
+  no call site uses — the second would disable healthy hosts, which is a regression dressed as a
+  safety check.
+- **Every installation report now records the host's registry surface.** The declared-host matrix
+  and the upstream canary read `AgentRegistry.prototype` on the host that was actually installed
+  and record which members are present and which are missing. A removal therefore shows up as a
+  matrix diff instead of a stack trace. The record is evidence, not a requirement: a missing member
+  is expected on newer hosts and is handled by the capability gate.
+- **DSH `0.2.2-rc.1` and `0.2.2-rc.2` are declared and installed in CI.** `0.2.2-rc.2` is the host
+  where every model request used to fail, and until now the matrix never ran on it. `engines.dsh`
+  is deliberately unchanged: DSH hard-blocks a plugin whose `engines.dsh` does not match, so
+  narrowing it would refuse to load on the next DSH release instead of degrading.
+- **Known gaps, unchanged:** the declared matrix still mirrors the older handbook sections rather
+  than being generated from one source; the UI strings and panel sections have never been reviewed
+  on a real machine.
+
 ## 0.3.1 — 2026-11-12
 
 First stable release of this fork, published to the npm `latest` dist-tag. Source behaviour is

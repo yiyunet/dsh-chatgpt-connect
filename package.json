@@ -2,7 +2,7 @@
   "name": "dsh-chatgpt-connect",
   "displayName": "ChatGPT Connect",
   "description": "ChatGPT OAuth and Codex models for DeepSeek Harness.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Frank Song",
   "contributors": [
     "Yan-Zero (original dsh-codex author)"
@@ -48,6 +48,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
     "check:compatibility": "node scripts/check-compatibility.mjs",
     "check:capability-cli": "node scripts/check-capability-cli.mjs",
+    "check:host-contract": "node scripts/check-host-contract.mjs",
     "check:canary-workflow": "node scripts/check-canary-workflow.mjs && node scripts/check-dsh-next-contract.mjs",
     "pack:check": "node scripts/check-pack-command.test.mjs && node scripts/check-pack-inventory.test.mjs && node scripts/check-pack.mjs",
     "check:dsh-install": "node scripts/check-dsh-install.mjs",
@@ -56,7 +57,7 @@
     "check:release-workflow": "node scripts/check-release-workflow.mjs",
     "check:env-proxy-import": "node scripts/check-env-proxy-import.mjs",
     "check:isolated-import": "node scripts/check-isolated-import.mjs",
-    "check": "pnpm run check:release-workflow && pnpm run check:canary-workflow && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:env-proxy-import && pnpm run check:isolated-import && pnpm run check:capability-cli && pnpm run check:request-metrics && pnpm --silent run check:compatibility && pnpm run pack:check",
+    "check": "pnpm run check:release-workflow && pnpm run check:canary-workflow && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build && pnpm run check:env-proxy-import && pnpm run check:isolated-import && pnpm run check:capability-cli && pnpm run check:host-contract && pnpm run check:request-metrics && pnpm --silent run check:compatibility && pnpm run pack:check",
     "prepublishOnly": "pnpm --config.minimum-release-age=0 run check",
     "check:request-metrics": "node scripts/check-request-metrics.mjs"
   },

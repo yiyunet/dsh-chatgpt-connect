@@ -94,7 +94,8 @@ assertContract('verified artifact is SHA-bound and digest checked', workflow.inc
 const readbackSource = readFileSync(new URL('./verify-npm-readback.mjs', import.meta.url), 'utf8')
 assertContract('post-publish readback uses tested bounded online diagnostics',
   /run: node scripts\/verify-npm-readback.mjs/.test(workflow)
-    && readbackSource.includes('--prefer-online') && readbackSource.includes('NPM_READBACK_ATTEMPTS = 12')
+    && readbackSource.includes('--prefer-online')
+    && Number(/NPM_READBACK_ATTEMPTS = (\d+)/u.exec(readbackSource)?.[1] ?? 0) >= 24
     && readbackSource.includes('maxBuffer: 64 * 1024') && readbackSource.includes('npmReadbackObservation'))
 assertContract('Alpha prereleases are created as GitHub prereleases from the workflow SHA',
   /if: \$\{\{ contains\(inputs\.version, '-alpha\.'\) \}\}[\s\S]*?gh release create[\s\S]*?--prerelease[\s\S]*?--target "\$GITHUB_SHA"[\s\S]*?--generate-notes/.test(workflow))

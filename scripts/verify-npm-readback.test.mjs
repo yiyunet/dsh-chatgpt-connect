@@ -37,7 +37,10 @@ assert.equal(sleeps, 1)
 assert.equal(logs[0].matches, false)
 assert.equal(logs[1].matches, true)
 for (const response of [good('0.1.0-alpha.4.33'), { status: 1, stdout: secret, stderr: secret }, { status: 0, stdout: '{}' }]) {
-  await assert.rejects(() => verifyNpmReadback(version, { attempts: 1, run: async () => response, log: () => {} }), /do not rerun publication/)
+  // Case-insensitive: the two terminal messages open the sentence differently because one follows
+  // a semicolon and the other starts a sentence. The invariant under test is the instruction
+  // "never republish", not its capitalisation.
+  await assert.rejects(() => verifyNpmReadback(version, { attempts: 1, run: async () => response, log: () => {} }), /do not rerun publication/iu)
 }
 await assert.rejects(() => verifyNpmReadback('invalid', { run: async () => { throw new Error('must not execute') } }), /exact release version/)
 // A stable version must land on `latest`. The tag is a property of the channel: reading it from
@@ -59,6 +62,6 @@ await assert.rejects(
     sleep: async () => {},
     log: () => {},
   }),
-  /do not rerun publication/,
+  /do not rerun publication/iu,
 )
 console.log('npm readback regressions: mismatch, channel dist-tag, recovery, bounded retries, failures, and diagnostic privacy passed')

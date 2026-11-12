@@ -41,7 +41,7 @@ failedPublish[1].steps[2].conclusion = 'failure'
 assert.throws(() => assertRecoveryRun(original, failedPublish), /not proven/)
 
 function fixture(options = {}) {
-  const state = { tagSha: options.tagSha, release: options.release, writes: [] }
+  const state = { tagSha: options.tagSha, release: options.release, writes: [], tagLag: 0, releaseLag: 0 }
   const ci = { ...original, id: 321, path: '.github/workflows/ci.yml', event: 'push', conclusion: 'success' }
   const ciJobs = ['validate (22.19.0)', 'validate (24.x)', 'browser-ui-regression', 'windows-canary-contract'].map(name => ({ name, status: 'completed', conclusion: 'success' }))
   const artifact = { id: 42, name: `verified-package-${sha}`, size_in_bytes: archive.length, expired: false, workflow_run: { id: 123, head_sha: sha }, ...options.artifact }
@@ -49,8 +49,9 @@ function fixture(options = {}) {
     async github(path, method = 'GET', payload) {
       if (method === 'POST') {
         state.writes.push({ path, payload })
-        if (path === 'git/refs') state.tagSha = payload.sha
-        else if (path === 'releases') state.release = { id: 456, tag_name: payload.tag_name, draft: false, prerelease: true }
+        // A freshly written ref or release lags: the next reads may still answer as missing.
+        if (path === 'git/refs') { state.tagSha = payload.sha; state.tagLag = options.tagLag ?? 0 }
+        else if (path === 'releases') { state.release = { id: 456, tag_name: payload.tag_name, draft: false, prerelease: payload.prerelease }; state.releaseLag = options.releaseLag ?? 0 }
         else throw new Error('Unexpected write')
         return {}
       }
@@ -60,15 +61,29 @@ function fixture(options = {}) {
       if (path.startsWith('actions/workflows/ci.yml/runs?')) return { workflow_runs: [ci] }
       if (path === 'actions/runs/321/attempts/1/jobs?per_page=100') return { total_count: ciJobs.length, jobs: options.ciJobs ?? ciJobs }
       if (path === 'actions/runs/123/artifacts?per_page=100') return { total_count: 1, artifacts: [artifact] }
-      if (path === `git/ref/tags/v${version}`) return state.tagSha ? { object: { type: 'commit', sha: state.tagSha } } : undefined
-      if (path === `releases/tags/v${version}`) return state.release
+      if (path === `git/ref/tags/v${version}`) {
+        if (state.tagLag > 0) { state.tagLag -= 1; return undefined }
+        return state.tagSha ? { object: { type: 'commit', sha: state.tagSha } } : undefined
+      }
+      if (path === `releases/tags/v${version}`) {
+        if (state.releaseLag > 0) { state.releaseLag -= 1; return undefined }
+        return state.release
+      }
       throw new Error('Unexpected fixture API path')
     },
+    async wait() {},
     async artifact() { return options.originalBytes ?? archive },
     async npmMetadata() { return options.npm ?? npm },
     async tarball() { return archive },
   } }
 }
+// A write followed by an immediate read is not reliable: the 0.3.1 recovery created its tag and
+// then aborted because the first readback still answered as missing. Both lags must recover.
+const tagLagFixture = fixture({ tagLag: 2 })
+assert.equal((await recoverRelease({ version, runId: 123, apply: true, confirmation: 'RECOVER' }, tagLagFixture.io)).status, 'recovered')
+const releaseLagFixture = fixture({ releaseLag: 2 })
+assert.equal((await recoverRelease({ version, runId: 123, apply: true, confirmation: 'RECOVER' }, releaseLagFixture.io)).status, 'recovered')
+
 const dry = fixture()
 assert.equal((await recoverRelease({ version, runId: 123 }, dry.io)).status, 'verified-recovery-needed')
 assert.equal(dry.state.writes.length, 0)

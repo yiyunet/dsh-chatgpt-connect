@@ -79,6 +79,25 @@ export function assertPublishedArtifact(version, metadata, originalBytes, npmByt
   return digest(npmBytes, 'sha256')
 }
 
+const READBACK_ATTEMPTS = 6
+
+/**
+ * Poll a read that may lag behind the write that produced it.
+ *
+ * GitHub serves a freshly created ref from a cache that can still answer 404 for a few seconds.
+ * Reading once and treating that absence as a conflict aborts after a successful write, which is
+ * exactly how the v0.3.1 recovery failed on 2026-11-12: the tag had been created correctly and the
+ * immediate readback reported it as missing.
+ */
+async function readEventually(read, wait, attempts = READBACK_ATTEMPTS) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const value = await read()
+    if (value !== undefined) return value
+    if (attempt < attempts) await wait(attempt * 2000)
+  }
+  return undefined
+}
+
 async function resolveTag(io, tag) {
   let object = (await io.github(`git/ref/tags/${tag}`, 'GET', undefined, true))?.object
   for (let depth = 0; object !== undefined && depth < 5; depth += 1) {
@@ -95,6 +114,7 @@ async function resolveTag(io, tag) {
 export async function recoverRelease({ version, runId, apply = false, confirmation }, io = recoveryIO()) {
   if (!isReleaseVersion(version) || !/^[1-9]\d{0,15}$/u.test(String(runId))) throw new Error('Expected an exact release version and numeric original run ID')
   if (apply && confirmation !== 'RECOVER') throw new Error('Apply requires exact RECOVER confirmation')
+  const wait = io.wait ?? (ms => new Promise(resolve => setTimeout(resolve, ms)))
   const run = await io.github(`actions/runs/${runId}`)
   if (String(run.id) !== String(runId) || !Number.isSafeInteger(run.run_attempt) || run.run_attempt < 1) throw new Error('Original run ID or attempt mismatch')
   const jobs = await io.github(`actions/runs/${runId}/attempts/${run.run_attempt}/jobs?per_page=100`)
@@ -127,11 +147,13 @@ export async function recoverRelease({ version, runId, apply = false, confirmati
     return { status: 'already-complete', ...result, releaseId: release.id }
   }
   if (!apply) return { status: 'verified-recovery-needed', ...result }
-  if (tagSha === undefined) await io.github('git/refs', 'POST', { ref: `refs/tags/${tag}`, sha })
-  if (await resolveTag(io, tag) !== sha) throw new Error('Tag changed before release creation')
+  if (tagSha === undefined) {
+    await io.github('git/refs', 'POST', { ref: `refs/tags/${tag}`, sha })
+    if (await readEventually(() => resolveTag(io, tag), wait) !== sha) throw new Error('Tag changed before release creation')
+  }
   await io.github('releases', 'POST', { tag_name: tag, target_commitish: sha, name: tag, prerelease, draft: false, generate_release_notes: true, make_latest: 'false' })
-  const created = await io.github(`releases/tags/${tag}`)
-  if (await resolveTag(io, tag) !== sha || created.tag_name !== tag || created.draft !== false || created.prerelease !== prerelease) throw new Error('Release creation readback mismatch; inspect before retrying')
+  const created = await readEventually(() => io.github(`releases/tags/${tag}`, 'GET', undefined, true), wait)
+  if (created === undefined || await resolveTag(io, tag) !== sha || created.tag_name !== tag || created.draft !== false || created.prerelease !== prerelease) throw new Error('Release creation readback mismatch; inspect before retrying')
   return { status: 'recovered', ...result, releaseId: created.id }
 }
 

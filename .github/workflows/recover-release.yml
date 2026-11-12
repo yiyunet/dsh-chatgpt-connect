@@ -1,18 +1,18 @@
-name: Recover published alpha release
+name: Recover published release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact Alpha version already published on npm
+        description: Exact release version already published on npm
         required: true
         type: string
       original_run_id:
-        description: Original Publish alpha release run ID whose publish step succeeded
+        description: Original release run ID whose publish step succeeded
         required: true
         type: string
       confirm:
-        description: Type RECOVER to authorize missing GitHub prerelease creation only
+        description: Type RECOVER to authorize the missing GitHub release creation only
         required: true
         type: string
 
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.15.0
-      - name: Verify original evidence and complete missing prerelease
+      - name: Verify original evidence and complete the missing release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}

@@ -2,7 +2,7 @@
   "name": "dsh-chatgpt-connect",
   "displayName": "ChatGPT Connect",
   "description": "ChatGPT OAuth and Codex models for DeepSeek Harness.",
-  "version": "0.3.1-alpha.5",
+  "version": "0.3.1",
   "author": "Frank Song",
   "contributors": [
     "Yan-Zero (original dsh-codex author)"
@@ -18,7 +18,7 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",
-    "tag": "alpha"
+    "tag": "latest"
   },
   "repository": {
     "type": "git",

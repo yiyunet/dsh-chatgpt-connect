@@ -54,7 +54,16 @@ assertContract('dependency installation is frozen', /pnpm(?:\s+--config\.minimum
 assertContract('workflow inputs are passed through environment variables',
   /VERSION:\s*\$\{\{\s*inputs\.version\s*\}\}/.test(workflow) &&
   /CONFIRM:\s*\$\{\{\s*inputs\.confirm\s*\}\}/.test(workflow))
-assertContract('strict alpha semver validation is present', /VERSION"\s*=~\s*\^\(0\|[\s\S]*-alpha\\\./.test(workflow))
+// Behaviour, not spelling: the declared check must accept exactly the two publishable shapes and
+// reject every other prerelease identifier, build metadata, and tag-like string.
+const declaredVersionPattern = workflow.match(/\[\[ ! "\$VERSION" =~ (.+) \]\]/u)?.[1]
+assertContract('exactly one release version check is declared', typeof declaredVersionPattern === 'string')
+const versionShape = new RegExp(declaredVersionPattern ?? '(?!)', 'u')
+assertContract('version validation accepts a stable release', versionShape.exec('0.3.1')?.[0] === '0.3.1')
+assertContract('version validation accepts a numeric Alpha prerelease', versionShape.exec('0.3.1-alpha.5')?.[0] === '0.3.1-alpha.5')
+for (const rejected of ['0.3.1-rc.1', '0.3.1-alpha', '0.3.1-alpha.01', '0.3.1+build.1', 'v0.3.1', 'latest', '0.3']) {
+  assertContract(`version validation rejects ${rejected}`, versionShape.exec(rejected)?.[0] !== rejected)
+}
 assertContract('input version is compared with package.json', /package_version[\s\S]*?VERSION/.test(workflow))
 assertContract('npm target existence is checked before publishing', /npm view "\$PACKAGE\@\$VERSION" version/.test(workflow))
 assertContract('git tag target existence is checked before publishing', /git ls-remote --exit-code --refs origin "refs\/tags\/v\$\{VERSION\}"/.test(workflow))
@@ -71,10 +80,12 @@ assertContract(
     /GH_TOKEN:\s*\$\{\{\s*github\.token\s*\}\}/.test(releaseValidationEnv),
 )
 
-const publishIndex = workflow.indexOf('npm publish "$RUNNER_TEMP/release/release.tgz" --tag alpha --provenance --ignore-scripts')
+const publishIndex = workflow.indexOf('npm publish "$RUNNER_TEMP/release/release.tgz" --tag "$tag" --provenance --ignore-scripts')
 const checkIndex = workflow.indexOf('pnpm run check')
 assertContract('complete check precedes npm publish', checkIndex >= 0 && publishIndex > checkIndex)
-assertContract('publish uses npm OIDC provenance and alpha tag', publishIndex >= 0)
+assertContract('publish uses npm OIDC provenance and the channel dist-tag', publishIndex >= 0)
+assertContract('the dist-tag follows the version channel',
+  /\*-alpha\.\*[\s\S]*?tag=alpha[\s\S]*?else tag=latest/.test(workflow))
 const publishJob = workflow.split('\n  publish:\n')[1] ?? ''
 assertContract('publish waits for read-only verification', /needs: verify/.test(publishJob))
 assertContract('privileged job does not install project dependencies or run project tests', !/pnpm|npm (?:ci|install)(?! --global)/.test(publishJob))
@@ -85,8 +96,11 @@ assertContract('post-publish readback uses tested bounded online diagnostics',
   /run: node scripts\/verify-npm-readback.mjs/.test(workflow)
     && readbackSource.includes('--prefer-online') && readbackSource.includes('NPM_READBACK_ATTEMPTS = 12')
     && readbackSource.includes('maxBuffer: 64 * 1024') && readbackSource.includes('npmReadbackObservation'))
-assertContract('GitHub prerelease is created from the workflow SHA',
-  /gh release create[\s\S]*?--prerelease[\s\S]*?--target "\$GITHUB_SHA"[\s\S]*?--generate-notes/.test(workflow))
+assertContract('Alpha prereleases are created as GitHub prereleases from the workflow SHA',
+  /if: \$\{\{ contains\(inputs\.version, '-alpha\.'\) \}\}[\s\S]*?gh release create[\s\S]*?--prerelease[\s\S]*?--target "\$GITHUB_SHA"[\s\S]*?--generate-notes/.test(workflow))
+assertContract('stable releases are created without the prerelease flag',
+  /if: \$\{\{ !contains\(inputs\.version, '-alpha\.'\) \}\}[\s\S]*?gh release create "v\$\{VERSION\}"[\s\S]*?--target "\$GITHUB_SHA"[\s\S]*?--generate-notes/.test(workflow))
+assertContract('only one release path marks a prerelease', (workflow.match(/--prerelease/gu) ?? []).length === 1)
 assertContract('workflow never promotes the latest dist-tag', !/npm dist-tag add/.test(workflow))
 assertContract('CI also covers dependent PR bases', /pull_request:\s*\n\s{2}workflow_dispatch:/.test(ciWorkflow))
 assertContract('package check invokes this contract', packageJson.scripts?.['check:release-workflow'] === 'node scripts/check-release-workflow.mjs')

@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { gunzipSync } from 'node:zlib'
 import { runBoundedCommand } from './bounded-command.mjs'
 import { assertReleaseCI } from './verify-release-ci.mjs'
-import { isAlphaReleaseVersion } from './release-metadata.mjs'
+import { isAlphaReleaseVersion, isReleaseVersion } from './release-metadata.mjs'
 
 export const RECOVERY_REPOSITORY = 'yiyunet/dsh-chatgpt-connect'
 const PACKAGE = 'dsh-chatgpt-connect'
@@ -24,7 +24,7 @@ export function assertRecoveryRun(run, jobs) {
   const verify = jobs.find(job => job.name === 'verify')
   const publish = jobs.find(job => job.name === 'publish')
   if (verify.status !== 'completed' || verify.conclusion !== 'success' || publish.status !== 'completed') throw new Error('Original release verification did not complete successfully')
-  for (const name of ['Recheck exact SHA CI after environment approval', 'Verify package digest', 'Publish alpha through npm Trusted Publishing']) {
+  for (const name of ['Recheck exact SHA CI after environment approval', 'Verify package digest', 'Publish through npm Trusted Publishing']) {
     const matches = publish.steps?.filter(step => step.name === name) ?? []
     if (matches.length !== 1 || matches[0].status !== 'completed' || matches[0].conclusion !== 'success') throw new Error('Original authorized publication is not proven; do not republish')
   }
@@ -93,7 +93,7 @@ async function resolveTag(io, tag) {
 
 /** Default is read-only. Apply can only create missing refs/releases, never overwrite them. */
 export async function recoverRelease({ version, runId, apply = false, confirmation }, io = recoveryIO()) {
-  if (!isAlphaReleaseVersion(version) || !/^[1-9]\d{0,15}$/u.test(String(runId))) throw new Error('Expected an exact Alpha version and numeric original run ID')
+  if (!isReleaseVersion(version) || !/^[1-9]\d{0,15}$/u.test(String(runId))) throw new Error('Expected an exact release version and numeric original run ID')
   if (apply && confirmation !== 'RECOVER') throw new Error('Apply requires exact RECOVER confirmation')
   const run = await io.github(`actions/runs/${runId}`)
   if (String(run.id) !== String(runId) || !Number.isSafeInteger(run.run_attempt) || run.run_attempt < 1) throw new Error('Original run ID or attempt mismatch')
@@ -115,20 +115,23 @@ export async function recoverRelease({ version, runId, apply = false, confirmati
   if (metadata.dist?.tarball !== expectedUrl) throw new Error('Unexpected npm tarball origin or path')
   const sha256 = assertPublishedArtifact(version, metadata, originalBytes, await io.tarball(expectedUrl))
   const tag = `v${version}`
+  // Recovery recreates the same release kind the channel implies; a stable version is not a
+  // prerelease, and the readbacks below compare against this value instead of a hardcoded `true`.
+  const prerelease = isAlphaReleaseVersion(version)
   const tagSha = await resolveTag(io, tag)
   if (tagSha !== undefined && tagSha !== sha) throw new Error('Existing tag points elsewhere; refusing to move it')
   const release = await io.github(`releases/tags/${tag}`, 'GET', undefined, true)
   const result = { version, runId: String(runId), sha, sha256, npmRepublished: false, tagsPromoted: false }
   if (release) {
-    if (tagSha !== sha || release.tag_name !== tag || release.draft !== false || release.prerelease !== true) throw new Error('Existing release conflicts with the recovery target')
+    if (tagSha !== sha || release.tag_name !== tag || release.draft !== false || release.prerelease !== prerelease) throw new Error('Existing release conflicts with the recovery target')
     return { status: 'already-complete', ...result, releaseId: release.id }
   }
   if (!apply) return { status: 'verified-recovery-needed', ...result }
   if (tagSha === undefined) await io.github('git/refs', 'POST', { ref: `refs/tags/${tag}`, sha })
   if (await resolveTag(io, tag) !== sha) throw new Error('Tag changed before release creation')
-  await io.github('releases', 'POST', { tag_name: tag, target_commitish: sha, name: tag, prerelease: true, draft: false, generate_release_notes: true, make_latest: 'false' })
+  await io.github('releases', 'POST', { tag_name: tag, target_commitish: sha, name: tag, prerelease, draft: false, generate_release_notes: true, make_latest: 'false' })
   const created = await io.github(`releases/tags/${tag}`)
-  if (await resolveTag(io, tag) !== sha || created.tag_name !== tag || created.draft !== false || created.prerelease !== true) throw new Error('Release creation readback mismatch; inspect before retrying')
+  if (await resolveTag(io, tag) !== sha || created.tag_name !== tag || created.draft !== false || created.prerelease !== prerelease) throw new Error('Release creation readback mismatch; inspect before retrying')
   return { status: 'recovered', ...result, releaseId: created.id }
 }
 
@@ -185,7 +188,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const args = process.argv.slice(2)
     const apply = args.at(-1) === '--apply'
     if (apply) args.pop()
-    if (args.length !== 4 || args[0] !== '--version' || args[2] !== '--run-id') throw new Error('Usage: recover-release --version <alpha> --run-id <original-id> [--apply]')
+    if (args.length !== 4 || args[0] !== '--version' || args[2] !== '--run-id') throw new Error('Usage: recover-release --version <release> --run-id <original-id> [--apply]')
     if (process.env.GITHUB_ACTIONS === 'true' && (process.env.GITHUB_REF !== 'refs/heads/main' || process.env.GITHUB_REPOSITORY !== RECOVERY_REPOSITORY)) throw new Error('Recovery workflow must run on the repository main branch')
     const result = await recoverRelease({ version: args[1], runId: args[3], apply, confirmation: process.env.CONFIRM })
     console.log(JSON.stringify(result))

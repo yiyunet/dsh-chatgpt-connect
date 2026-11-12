@@ -1,14 +1,17 @@
 import { readFile, stat } from 'node:fs/promises'
 import './vendor-codex-oauth.mjs'
-import { isAlphaReleaseVersion, validateReadmeInstallation, validateUpdateHighlights } from './release-metadata.mjs'
+import { isAlphaReleaseVersion, isReleaseVersion, validateReadmeInstallation, validateUpdateHighlights } from './release-metadata.mjs'
 import './release-metadata.test.mjs'
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
 const failures = []
 
 if (packageJson.name !== 'dsh-chatgpt-connect') failures.push('package name must be dsh-chatgpt-connect')
-if (!isAlphaReleaseVersion(packageJson.version)) failures.push('package version must be a numeric Alpha release without build metadata')
-if (packageJson.publishConfig?.tag !== 'alpha') failures.push('publishConfig.tag must be alpha')
+if (!isReleaseVersion(packageJson.version)) failures.push('package version must be a numeric release without build metadata')
+// The published dist-tag is a property of the version channel, not a free choice: an Alpha
+// prerelease must never occupy `latest` (that would hand every reader a prerelease by default).
+const expectedDistTag = isAlphaReleaseVersion(packageJson.version) ? 'alpha' : 'latest'
+if (packageJson.publishConfig?.tag !== expectedDistTag) failures.push(`publishConfig.tag must be ${expectedDistTag}`)
 if (packageJson.displayName !== 'ChatGPT Connect') failures.push('displayName mismatch')
 if (packageJson.description !== 'ChatGPT OAuth and Codex models for DeepSeek Harness.') failures.push('description mismatch')
 if (packageJson.author !== 'Frank Song') failures.push('package author must identify the Codex Connect author')

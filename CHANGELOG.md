@@ -4,6 +4,26 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.1 — 2026-11-12
+
+First stable release of this fork, published to the npm `latest` dist-tag. Source behaviour is
+identical to `0.3.1-alpha.5`; only the version and the release channel change.
+
+- **`latest` now resolves to runnable code.** It previously pointed at `0.3.1-alpha.4`, which
+  failed every model request on DSH `0.2.2-rc.2` — and the READMEs install by bare package name,
+  so `latest` is the command most readers actually run.
+- **One workflow publishes two channels.** A numeric Alpha version still publishes to `alpha` and
+  creates a GitHub prerelease; a stable `X.Y.Z` publishes to `latest` and creates a full release.
+  The version shape selects the channel, so no run can put a prerelease on `latest`, and `lint`
+  enforces the same rule against `publishConfig.tag`.
+- **Readback and recovery follow the channel.** Post-publish verification asserts the version on
+  the dist-tag its shape requires, and recovery recreates a full release rather than a prerelease.
+  Regressions cover both, because a stable publish failing readback would otherwise leave the npm
+  version without its GitHub release.
+- **Not addressed here:** `engines.dsh` still declares `>=0.1.7-rc.1 <0.3.0`, and the declared
+  verification matrix still omits DSH `0.2.2-rc.1`/`rc.2` — the hosts this fix exists for.
+  Narrowing the range and adding those hosts is follow-up work, not part of this release.
+
 ## 0.3.1-alpha.5 — 2026-11-08
 
 Compatibility fix for DSH releases that removed two `AgentRegistry` members. No provider, image or

@@ -30,7 +30,7 @@ const original = {
 }
 const jobs = [
   { name: 'verify', status: 'completed', conclusion: 'success' },
-  { name: 'publish', status: 'completed', conclusion: 'failure', steps: ['Recheck exact SHA CI after environment approval', 'Verify package digest', 'Publish alpha through npm Trusted Publishing'].map(name => ({ name, status: 'completed', conclusion: 'success' })) },
+  { name: 'publish', status: 'completed', conclusion: 'failure', steps: ['Recheck exact SHA CI after environment approval', 'Verify package digest', 'Publish through npm Trusted Publishing'].map(name => ({ name, status: 'completed', conclusion: 'success' })) },
 ]
 assert.doesNotThrow(() => assertRecoveryRun(original, jobs))
 for (const change of [{ event: 'pull_request' }, { head_branch: 'other' }, { status: 'in_progress' }, { head_sha: 'invalid' }, { head_repository: { full_name: 'other/repo' } }]) {
@@ -89,6 +89,10 @@ for (const options of [
   assert.equal(invalid.state.writes.length, 0)
 }
 await assert.rejects(() => recoverRelease({ version, runId: 123, apply: true }, fixture().io), /RECOVER/)
-await assert.rejects(() => recoverRelease({ version: 'latest', runId: 123 }, fixture().io), /exact Alpha/)
+await assert.rejects(() => recoverRelease({ version: 'latest', runId: 123 }, fixture().io), /exact release version/)
 await assert.rejects(() => recoverRelease({ version, runId: '../123' }, fixture().io), /numeric original/)
-console.log('release recovery regressions: provenance, exact CI, integrity, expiry, conflicts, read-only default, confirmation, and idempotence passed')
+// A stable version must pass the release predicate and then fail on evidence, not on shape. The
+// fixture only carries Alpha artefacts, so reaching the tarball-origin guard proves the predicate
+// accepted the stable shape.
+await assert.rejects(() => recoverRelease({ version: '0.3.1', runId: 123 }, fixture().io), /Unexpected npm tarball origin or path/)
+console.log('release recovery regressions: provenance, exact CI, integrity, expiry, conflicts, read-only default, confirmation, idempotence, and release channel passed')

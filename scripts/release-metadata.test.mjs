@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { isAlphaReleaseVersion, validateReadmeInstallation, validateUpdateHighlights } from './release-metadata.mjs'
+import { isAlphaReleaseVersion, isReleaseVersion, validateReadmeInstallation, validateUpdateHighlights } from './release-metadata.mjs'
 
 let cases = 0
 function check(name, run) {
@@ -16,17 +16,23 @@ const workflow = readFileSync(new URL('../.github/workflows/release.yml', import
 const workflowPattern = workflow.match(/\[\[ ! "\$VERSION" =~ (.+) \]\]/u)?.[1]
 assert.ok(workflowPattern, 'release workflow must declare its Alpha version check')
 const workflowVersion = new RegExp(workflowPattern, 'u')
-for (const [value, accepted] of [
-  ['0.1.0-alpha.4.29', true], ['0.1.0-alpha.4.30', true], ['0.2.0-alpha.1', true],
-  ['1.0.0-alpha.0', true], ['0.1.0-alpha.10', true],
-  ['0.1.0-alpha.01', false], ['01.1.0-alpha.1', false], ['0.1.0-alpha.1.01', false],
-  ['0.1.0-alpha.1+build.2', false], ['0.1.2-rc.1+build.0', false],
-  ['0.1.0-beta.1', false], ['0.1.0-rc.1', false], ['0.1.0', false],
-  ['alpha', false], ['latest', false], ['v0.1.0-alpha.1', false], ['0.1.0-alpha.1\n', false],
+// The workflow publishes exactly two shapes: numeric Alpha prereleases and stable full releases.
+// The Alpha predicate keeps its narrower meaning because the highlight catalog is Alpha-only, so
+// each column is asserted separately instead of assuming the two predicates agree everywhere.
+for (const [value, alpha, release] of [
+  ['0.1.0-alpha.4.29', true, true], ['0.1.0-alpha.4.30', true, true], ['0.2.0-alpha.1', true, true],
+  ['1.0.0-alpha.0', true, true], ['0.1.0-alpha.10', true, true],
+  ['0.1.0', false, true], ['0.3.1', false, true], ['1.0.0', false, true],
+  ['0.1.0-alpha.01', false, false], ['01.1.0-alpha.1', false, false], ['0.1.0-alpha.1.01', false, false],
+  ['0.1.0-alpha.1+build.2', false, false], ['0.1.2-rc.1+build.0', false, false],
+  ['0.1.0-beta.1', false, false], ['0.1.0-rc.1', false, false],
+  ['0.3.1+build.2', false, false], ['01.3.1', false, false], ['0.3', false, false],
+  ['alpha', false, false], ['latest', false, false], ['v0.1.0-alpha.1', false, false], ['0.1.0-alpha.1\n', false, false],
 ]) {
   check(`local and workflow format: ${JSON.stringify(value)}`, () => {
-    assert.equal(isAlphaReleaseVersion(value), accepted)
-    assert.equal(workflowVersion.exec(value)?.[0] === value, accepted)
+    assert.equal(isAlphaReleaseVersion(value), alpha)
+    assert.equal(isReleaseVersion(value), release)
+    assert.equal(workflowVersion.exec(value)?.[0] === value, release)
   })
 }
 

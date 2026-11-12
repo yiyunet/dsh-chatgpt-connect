@@ -1,11 +1,47 @@
-/** Alpha release metadata checks shared by lint and its keyless regression tests. */
+/** Release metadata checks shared by lint and its keyless regression tests. */
 
 const ALPHA_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-alpha\.(0|[1-9]\d*)(\.(0|[1-9]\d*))*$/u
+const STABLE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u
 const HIGHLIGHT_KINDS = new Set(['trusted-origins', 'runtime-compatibility', 'quota-fast-mode', 'dsh-rc7', 'search-stability', 'image-generation', 'oauth-history', 'model-visibility', 'proxy-connection', 'models-account', 'context-budget', 'auto-review-probe', 'auto-review', 'astra-compatibility', 'multi-account', 'search-route', 'image-model-hint', 'luna-reserve'])
 
 /** Accept the numeric Alpha format supported by the current release workflow, without build metadata. */
 export function isAlphaReleaseVersion(value) {
   return typeof value === 'string' && ALPHA_VERSION.exec(value)?.[0] === value
+}
+
+/** Accept the stable `X.Y.Z` format published as a full release, without build metadata. */
+export function isStableReleaseVersion(value) {
+  return typeof value === 'string' && STABLE_VERSION.exec(value)?.[0] === value
+}
+
+/**
+ * Accept every version the release workflow may publish.
+ *
+ * Exactly two shapes: a numeric Alpha prerelease, or a stable full release. Every other prerelease
+ * identifier and all build metadata stay rejected, so the workflow can never publish a shape whose
+ * dist-tag has no declared meaning (Alpha -> `alpha`, stable -> `latest`).
+ */
+export function isReleaseVersion(value) {
+  return isAlphaReleaseVersion(value) || isStableReleaseVersion(value)
+}
+
+/**
+ * Compare two release versions with SemVer precedence: a stable version outranks its prereleases.
+ *
+ * `compareAlphaVersions` cannot answer this because it flattens `-alpha.` into the numeric run, so
+ * `0.3.1` would sort below `0.3.1-alpha.5`. Only the INSTALL-versus-candidate bound needs the
+ * SemVer answer, so both comparisons stay available and each keeps its own meaning.
+ */
+export function compareReleaseVersions(left, right) {
+  if (isAlphaReleaseVersion(left) && isAlphaReleaseVersion(right)) return compareAlphaVersions(left, right)
+  const core = value => value.split('-')[0].split('.').map(part => BigInt(part))
+  const a = core(left)
+  const b = core(right)
+  for (let index = 0; index < 3; index += 1) {
+    if (a[index] !== b[index]) return a[index] < b[index] ? -1 : 1
+  }
+  if (isAlphaReleaseVersion(left) === isAlphaReleaseVersion(right)) return 0
+  return isAlphaReleaseVersion(left) ? -1 : 1
 }
 
 /** Compare validated numeric Alpha versions without assuming a particular core or counter length. */
@@ -78,9 +114,9 @@ export function validateReadmeInstallation(readmes, compatibility, packageVersio
   const exact = [...String(install ?? '').matchAll(/\bdsh plugin --profile [\w-]+ add dsh-chatgpt-connect@([^\s`]+)/gu)]
     .map(match => match[1])
   const distinctExact = [...new Set(exact)]
-  if (distinctExact.length !== 1 || !isAlphaReleaseVersion(distinctExact[0])) {
-    failures.push('INSTALL.md must recommend exactly one exact Alpha version')
-  } else if (isAlphaReleaseVersion(packageVersion) && compareAlphaVersions(distinctExact[0], packageVersion) > 0) {
+  if (distinctExact.length !== 1 || !isReleaseVersion(distinctExact[0])) {
+    failures.push('INSTALL.md must recommend exactly one exact release version')
+  } else if (isReleaseVersion(packageVersion) && compareReleaseVersions(distinctExact[0], packageVersion) > 0) {
     failures.push('INSTALL.md installation version must not be newer than the candidate package')
   }
   if (compatibility?.schemaVersion !== 1 || !Array.isArray(compatibility.pluginVersions) || compatibility.pluginVersions.length === 0) {

@@ -74,7 +74,7 @@ describe('installation version guidance', () => {
     expect(compatibility.pluginVersions.find((entry: { version: string }) => entry.version === '0.2.0-alpha.12')?.verifiedDshVersions)
       .toEqual(declared.dshPluginApi.versions)
     expect(compatibility.pluginVersions
-      .filter((entry: { version: string }) => !['0.2.0-alpha.12', '0.3.1-alpha.1', '0.3.1-alpha.2', '0.3.1-alpha.3', '0.3.1-alpha.4', '0.3.1-alpha.5'].includes(entry.version))
+      .filter((entry: { version: string }) => !['0.2.0-alpha.12', '0.3.1-alpha.1', '0.3.1-alpha.2', '0.3.1-alpha.3', '0.3.1-alpha.4', '0.3.1-alpha.5', '0.3.1'].includes(entry.version))
       .every((entry: { verifiedDshVersions: string[] }) => !entry.verifiedDshVersions.includes('0.2.2-alpha.3'))).toBe(true)
   })
 

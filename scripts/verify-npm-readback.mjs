@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url'
 import { setTimeout as delay } from 'node:timers/promises'
 import { runBoundedCommand } from './bounded-command.mjs'
-import { isAlphaReleaseVersion } from './release-metadata.mjs'
+import { isAlphaReleaseVersion, isReleaseVersion } from './release-metadata.mjs'
 
 export const RELEASE_PACKAGE = 'dsh-chatgpt-connect'
 export const NPM_READBACK_ATTEMPTS = 12
@@ -24,12 +24,20 @@ export function npmReadbackObservation(result, field) {
     return { status: value === null ? 'invalid-response' : 'observed', exitCode, errorCode, value }
   }
   const value = { alpha: safeVersion(parsed?.alpha), latest: safeVersion(parsed?.latest) }
-  return { status: value.alpha === null ? 'invalid-response' : 'observed', exitCode, errorCode, value }
+  // Either tag being readable is enough to observe the snapshot; which one must match is decided
+  // by the version channel, not by the shape of the response.
+  const observed = value.alpha !== null || value.latest !== null
+  return { status: observed ? 'observed' : 'invalid-response', exitCode, errorCode, value }
+}
+
+/** The dist-tag a version must occupy: Alpha prereleases publish to `alpha`, stable releases to `latest`. */
+export function expectedDistTag(version) {
+  return isAlphaReleaseVersion(version) ? 'alpha' : 'latest'
 }
 
 /** Bound both npm's internal fetch and the whole child process; prefer fresh registry metadata. */
 export async function verifyNpmReadback(version, dependencies = {}) {
-  if (!isAlphaReleaseVersion(version)) throw new Error('Expected one exact numeric Alpha version')
+  if (!isReleaseVersion(version)) throw new Error('Expected one exact release version')
   const run = dependencies.run ?? runBoundedCommand
   const sleep = dependencies.sleep ?? delay
   const log = dependencies.log ?? (value => console.log(JSON.stringify(value)))
@@ -44,13 +52,14 @@ export async function verifyNpmReadback(version, dependencies = {}) {
     ])
     const published = npmReadbackObservation(versionResult, 'version')
     const tags = npmReadbackObservation(tagsResult, 'tags')
+    const tag = expectedDistTag(version)
     const matches = published.status === 'observed' && tags.status === 'observed'
-      && published.value === version && tags.value.alpha === version
-    log({ step: 'npm-readback', attempt, expected: version, published, tags, matches })
+      && published.value === version && tags.value[tag] === version
+    log({ step: 'npm-readback', attempt, expected: version, expectedTag: tag, published, tags, matches })
     if (matches) return { version, alpha: tags.value.alpha, latest: tags.value.latest, attempts: attempt }
     if (attempt < attempts) await sleep(10_000)
   }
-  throw new Error('npm readback did not confirm the exact version and alpha tag. Inspect the safe observations; do not rerun publication. Use recovery-only verification after registry availability is confirmed.')
+  throw new Error('npm readback did not confirm the exact version on its expected dist-tag. Inspect the safe observations; do not rerun publication. Use recovery-only verification after registry availability is confirmed.')
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

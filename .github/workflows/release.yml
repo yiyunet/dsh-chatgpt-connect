@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact package version to publish (for example 0.1.0-alpha.4.8)
+        description: Exact package version to publish (stable 0.3.1 or Alpha 0.3.1-alpha.5)
         required: true
         type: string
       confirm:
-        description: Type PUBLISH to authorize this alpha release
+        description: Type PUBLISH to authorize this release
         required: true
         type: string
 
@@ -77,8 +77,8 @@ jobs:
             echo 'The confirmation input must be exactly PUBLISH.' >&2
             exit 1
           fi
-          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-alpha\.(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*$ ]]; then
-            echo "Version must be a strict alpha semver (got: $VERSION)." >&2
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-alpha\.(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*))*)?$ ]]; then
+            echo "Version must be a strict release semver, stable (X.Y.Z) or numeric Alpha (X.Y.Z-alpha.N) (got: $VERSION)." >&2
             exit 1
           fi
 
@@ -189,22 +189,32 @@ jobs:
           [[ "$EXPECTED_SHA256" =~ ^[a-f0-9]{64}$ ]]
           echo "$EXPECTED_SHA256  $RUNNER_TEMP/release/release.tgz" | sha256sum --check --strict
 
-      - name: Publish alpha through npm Trusted Publishing
+      - name: Publish through npm Trusted Publishing
         shell: bash
         env:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          npm publish "$RUNNER_TEMP/release/release.tgz" --tag alpha --provenance --ignore-scripts
+          if [[ "$VERSION" == *-alpha.* ]]; then tag=alpha; else tag=latest; fi
+          npm publish "$RUNNER_TEMP/release/release.tgz" --tag "$tag" --provenance --ignore-scripts
 
-      - name: Verify npm version and alpha dist-tag
+      - name: Verify npm version and release dist-tag
         env:
           VERSION: ${{ inputs.version }}
         run: node scripts/verify-npm-readback.mjs
 
       - name: Create GitHub prerelease
+        if: ${{ contains(inputs.version, '-alpha.') }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
         run: gh release create "v${VERSION}" --repo "$GITHUB_REPOSITORY" --prerelease --target "$GITHUB_SHA" --generate-notes
+
+      - name: Create GitHub release
+        if: ${{ !contains(inputs.version, '-alpha.') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: gh release create "v${VERSION}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --generate-notes

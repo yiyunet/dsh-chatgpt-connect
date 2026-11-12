@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { RECOVERY_HOST } from './adaptive-task-recovery-contract.mjs'
+import { taskMatrixVersions } from './adaptive-task-host-availability.mjs'
 /** Run the same task lifecycle contract and bundled implementation on exact disposable DSH runtimes. */
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
@@ -59,7 +60,11 @@ async function main() {
   const reportPath = argv[1] === undefined ? undefined : resolve(ROOT, argv[1])
   if (reportPath) assert.ok(inside(join(ROOT, 'docs/experiments'), reportPath) && reportPath.endsWith('.json'))
   const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'))
-  const versions = JSON.parse(await readFile(join(ROOT, 'compatibility.json'), 'utf8')).dshPluginApi.versions
+  const declared = JSON.parse(await readFile(join(ROOT, 'compatibility.json'), 'utf8')).dshPluginApi.versions
+  const versions = taskMatrixVersions(declared, RECOVERY_HOST)
+  for (const version of declared.filter(version => !versions.includes(version))) {
+    process.stderr.write(`Skipping declared host ${version}: the task layer is unavailable there by design\n`)
+  }
   const require = createRequire(join(ROOT, 'package.json'))
   const vitest = dirname(require.resolve('vitest/package.json'))
   const root = await mkdtemp(join(tmpdir(), 'dsh-task-matrix-'))

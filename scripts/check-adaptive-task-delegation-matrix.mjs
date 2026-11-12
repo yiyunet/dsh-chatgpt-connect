@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { RECOVERY_HOST, assertRecoveryCrashes } from './adaptive-task-recovery-contract.mjs'
+import { taskMatrixVersions } from './adaptive-task-host-availability.mjs'
 import { checkRecoveryCrashes } from './check-adaptive-task-recovery-crashes.mjs'
 /** Exact-host Phase 2 synthetic matrix. This is separate from the Phase 1 matrix. */
 import assert from 'node:assert/strict'
@@ -34,7 +35,11 @@ async function main() {
   const reportPath = argv[1] === undefined ? undefined : resolve(ROOT, argv[1])
   if (reportPath) assert.ok(reportPath.startsWith(join(ROOT, 'docs', 'experiments') + '/') && reportPath.endsWith('.json'))
   const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'))
-  const versions = JSON.parse(await readFile(join(ROOT, 'compatibility.json'), 'utf8')).dshPluginApi.versions
+  const declared = JSON.parse(await readFile(join(ROOT, 'compatibility.json'), 'utf8')).dshPluginApi.versions
+  const versions = taskMatrixVersions(declared, RECOVERY_HOST)
+  for (const version of declared.filter(version => !versions.includes(version))) {
+    process.stderr.write(`Skipping declared host ${version}: the task layer is unavailable there by design\n`)
+  }
   const require = createRequire(join(ROOT, 'package.json')); const vitest = dirname(require.resolve('vitest/package.json'))
   const root = await mkdtemp(join(tmpdir(), 'dsh-task-delegation-matrix-')); const reports = []
   const registry = cachedTaskRegistry(join(ROOT, 'node_modules/.cache/task-matrix/manifests'))

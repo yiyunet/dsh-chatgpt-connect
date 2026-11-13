@@ -4,6 +4,25 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.3 — 2026-11-13
+
+A host without the task layer no longer leaves a dead recovery control on the composer.
+
+- **A missing capability now answers `404`, not `409`.** `AdaptiveTaskControlRuntime.state()` raised a
+  plain `Error('TASK_HOST_UNSUPPORTED')`; the HTTP layer could not classify it, filed it as
+  `TASK_OPERATION_FAILED` and returned `409`. The client reads `409` as *unconfirmed state*, so it
+  kept the "Existing task controls" button on screen — for a session with nothing to recover, on a
+  host that could never answer. The error is now an `AdaptiveTaskError`, and that one code answers
+  `404`: "this capability is not present here", the same answer a host that never mounted the route
+  gives. The client already treats `404` as absence, so **no client change was needed**.
+- **Every real conflict keeps `409`.** `TASK_OWNER_MISMATCH` and `TASK_BROWSER_AUTH_REQUIRED` stay
+  `403`; every other task error, including an unclassified one, stays `409`. Three cases in
+  `tests/adaptive-task-publication.spec.ts` pin that boundary so the `404` cannot quietly spread to
+  conditions that really do mean "read the state again".
+- **The recovery path is untouched.** A host that does provide the task layer, and a user who does
+  have a frozen task to stop or hand back to manual, get the same control and the same exits. Only
+  the "there is nothing here" case stops advertising itself.
+
 ## 0.3.2 — 2026-11-13
 
 Host-compatibility hardening: the capability gate now covers the whole surface the frozen Adaptive

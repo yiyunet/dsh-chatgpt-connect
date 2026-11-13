@@ -26,9 +26,14 @@ import { AdaptiveTaskTransitions } from './adaptive-task-transitions.ts'
  * A host that removed `AgentRegistry.roots()` / `isOwnedBy()` has no task layer. Every entry point
  * fails explicitly instead of calling a missing member, and probing happens at call time because the
  * agent registry is not resolved yet while the plugin is being applied.
+ *
+ * Raised as an `AdaptiveTaskError` on purpose: the HTTP layer answers `404` for it — "this capability
+ * does not exist on this host" — instead of the `409` that means "state conflict, read again". A plain
+ * `Error` was reported as `TASK_OPERATION_FAILED`, which the client reads as *unconfirmed* state and
+ * therefore keeps the recovery control on screen forever, for a host that can never recover anything.
  */
 function assertTaskHostSupported(ctx: Context): void {
-  if (!hostSupportsAdaptiveTask(ctx)) throw new Error('TASK_HOST_UNSUPPORTED')
+  if (!hostSupportsAdaptiveTask(ctx)) taskFailure('TASK_HOST_UNSUPPORTED')
 }
 
 export interface TaskControlOptions {

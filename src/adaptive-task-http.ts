@@ -76,6 +76,11 @@ export function registerAdaptiveTaskHttp(ctx: Context, runtime: {
       } else reply(res, 405, { error: 'TASK_METHOD_NOT_ALLOWED' })
     } catch (error: unknown) {
       const code = error instanceof AdaptiveTaskError ? error.code : 'TASK_OPERATION_FAILED'
+      // A host without the task layer has no state to report, now or later. `404` tells the client the
+      // capability is absent, which is the same answer a host that never mounted the route gives; `409`
+      // instead reads as "unconfirmed" and pins a recovery control to the composer forever. Conflict
+      // codes below keep `409` — those really do mean "read the state again before acting".
+      if (code === 'TASK_HOST_UNSUPPORTED') { reply(res, 404, { error: code }); return }
       reply(res, code === 'TASK_OWNER_MISMATCH' || code === 'TASK_BROWSER_AUTH_REQUIRED' ? 403 : 409, { error: code })
     }
   } }), 'dsh-codex-connect: task route')

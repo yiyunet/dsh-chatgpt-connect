@@ -76,10 +76,10 @@ describe('installation version guidance', () => {
     // stop at the same version. B5 added DSH 0.2.2-rc.1/rc.2 — the hosts the 0.3.1 fix exists for —
     // so the anchor moves to the newest entry instead of rewriting Alpha 12's history.
     const newest = compatibility.pluginVersions[compatibility.pluginVersions.length - 1]
-    expect(newest?.version).toBe('0.3.2')
+    expect(newest?.version).toBe('0.3.3')
     expect(newest?.verifiedDshVersions).toEqual(declared.dshPluginApi.versions)
     expect(compatibility.pluginVersions
-      .filter((entry: { version: string }) => !['0.2.0-alpha.12', '0.3.1-alpha.1', '0.3.1-alpha.2', '0.3.1-alpha.3', '0.3.1-alpha.4', '0.3.1-alpha.5', '0.3.1', '0.3.2'].includes(entry.version))
+      .filter((entry: { version: string }) => !['0.2.0-alpha.12', '0.3.1-alpha.1', '0.3.1-alpha.2', '0.3.1-alpha.3', '0.3.1-alpha.4', '0.3.1-alpha.5', '0.3.1', '0.3.2', '0.3.3'].includes(entry.version))
       .every((entry: { verifiedDshVersions: string[] }) => !entry.verifiedDshVersions.includes('0.2.2-alpha.3'))).toBe(true)
   })
 

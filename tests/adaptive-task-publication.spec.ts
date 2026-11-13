@@ -7,6 +7,7 @@ import type { AdaptiveTaskCommand, AdaptiveTaskState } from '../src/adaptive-tas
 import { ADAPTIVE_TASK_PATH } from '../src/adaptive-task-contract.ts'
 import { registerAdaptiveTaskHttp } from '../src/adaptive-task-http.ts'
 import { ADAPTIVE_TASK_PUBLIC_RELEASE, ADAPTIVE_TASK_RELEASE_PAUSED, publicTaskCommandAllowed, publicTaskState } from '../src/adaptive-task-publication.ts'
+import { AdaptiveTaskError } from '../src/adaptive-task-store.ts'
 
 const exits = ['manual', 'stop', 'delegate-disable', 'downgrade'] as const
 const activations = ['start', 'resume', 'upgrade', 'delegate-enable'] as const
@@ -139,5 +140,28 @@ describe('public HTTP admission while paused', () => {
     expect(host.effect.mock.results[0]!.value).toBe(host.unregister)
     host.effect.mock.results[0]!.value()
     expect(host.unregister).toHaveBeenCalledTimes(1)
+  })
+})
+
+/**
+ * A host that dropped `AgentRegistry.roots()` / `isOwnedBy()` cannot report task state, now or later.
+ * Reporting that as a conflict made the client treat it as *unconfirmed* and pin a recovery control to
+ * the composer for a session that has nothing to recover. `404` is the honest answer: no such capability.
+ */
+describe('host without the task layer', () => {
+  it('answers 404 instead of 409 so the client stops offering recovery', async () => {
+    const host = harness()
+    host.runtime.state.mockRejectedValueOnce(new AdaptiveTaskError('TASK_HOST_UNSUPPORTED'))
+    expect(await host.send()).toEqual({ status: 404, body: { error: 'TASK_HOST_UNSUPPORTED' } })
+  })
+  it('keeps every real conflict code at 409', async () => {
+    const host = harness()
+    host.runtime.state.mockRejectedValueOnce(new AdaptiveTaskError('TASK_HOST_AUTOMATION_UNVERIFIED'))
+    expect(await host.send()).toEqual({ status: 409, body: { error: 'TASK_HOST_AUTOMATION_UNVERIFIED' } })
+  })
+  it('keeps an unclassified failure at 409 rather than pretending the capability is absent', async () => {
+    const host = harness()
+    host.runtime.state.mockRejectedValueOnce(new Error('Synthetic unclassified failure'))
+    expect(await host.send()).toEqual({ status: 409, body: { error: 'TASK_OPERATION_FAILED' } })
   })
 })

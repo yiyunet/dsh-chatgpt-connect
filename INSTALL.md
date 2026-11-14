@@ -1,6 +1,6 @@
 # Installation Runbook for CLI Agents
 
-**This fork — `dsh-chatgpt-connect@0.3.4`, published 2026-11-13 on the npm `latest` dist-tag through Trusted Publishing.** It is a self-maintained fork of [`franksong2702/dsh-codex-connect`](https://github.com/franksong2702/dsh-codex-connect). Its own install command is given in the quick-install section below. **Every `dsh-codex-connect@…` command in this document is upstream history under the previous package name and refers to a different npm artifact, not this fork.**
+**This fork — `dsh-chatgpt-connect@0.3.5`, published 2026-11-14 on the npm `latest` dist-tag through Trusted Publishing.** It is a self-maintained fork of [`franksong2702/dsh-codex-connect`](https://github.com/franksong2702/dsh-codex-connect). Its own install command is given in the quick-install section below. **Every `dsh-codex-connect@…` command in this document is upstream history under the previous package name and refers to a different npm artifact, not this fork.**
 
 **Published Alpha 12:** [`0.2.0-alpha.12`](https://github.com/franksong2702/dsh-codex-connect/releases/tag/v0.2.0-alpha.12) retires Luna Reserve, adds exact stock DSH `0.2.2-alpha.3` with recovery-only Task handling and fixes the stock Auto review preset's unsupported Codex temperature. Registry version/alpha, matching source tag/prerelease and archive integrity have been independently verified. `latest` remains Alpha 10. See the bilingual [release and migration notes](docs/release-notes/0.2.0-alpha.12.md). No daily Host upgrade is implied.
 
@@ -182,10 +182,10 @@ Alpha 4.33 omits the `modelErrors` profile field required by RC model packages, 
 
 ### Install the selected version and validate
 
-**This fork — `dsh-chatgpt-connect@0.3.4`, published 2026-11-13 on the npm `latest` dist-tag.** The exact-version commands further down target the **previous package name** and do not install this fork; they are kept only to reproduce older upstream pairings.
+**This fork — `dsh-chatgpt-connect@0.3.5`, published 2026-11-14 on the npm `latest` dist-tag.** The exact-version commands further down target the **previous package name** and do not install this fork; they are kept only to reproduce older upstream pairings.
 
 ```sh
-dsh plugin --profile web add dsh-chatgpt-connect@0.3.4
+dsh plugin --profile web add dsh-chatgpt-connect@0.3.5
 ```
 
 Always pass an exact version when you need to reproduce a pairing that is recorded

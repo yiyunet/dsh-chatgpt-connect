@@ -50,6 +50,45 @@ function refusal(status: 401 | 403 | 503 | undefined): HarnessHttpRejection | un
  * A missing member is a contract break and is raised as one; only a *throwing* dependency stays
  * reported as unavailable.
  */
+/**
+ * Declare a route that authenticates the browser itself.
+ *
+ * DSH `0.2.2-rc.2` made every WebServer route default to `auth: 'required'`, and `required` needs an
+ * admitted *operator* Peer — an identity only a `/connect` API session establishes. A browser fetch
+ * never has one, so such a request is refused **before the handler runs**, with a plain-text 401. The
+ * client reads a non-JSON body as an unusable answer and keeps the recovery control on screen, which
+ * is why fixing the admission code inside the handler changed nothing at all.
+ *
+ * These routes therefore opt out of the route policy and keep authenticating the browser with the
+ * cookie that the Host itself issues (`adaptiveBrowserPrincipal`, and `browserCookiePresent` below for
+ * the routes that only need presence). The `auth` field is absent from this package's peer types, hence
+ * the widening; it is ignored by hosts that predate the policy.
+ */
+export function anonymousRoute<T extends { kind: 'exact' | 'prefix'; path: string }>(
+  route: T,
+): Parameters<Context['webServer']['register']>[0] {
+  return { ...route, auth: 'anonymous' } as unknown as Parameters<Context['webServer']['register']>[0]
+}
+
+/**
+ * Whether the request carries a Host-issued browser session cookie.
+ *
+ * Signature verification needs the Host's secret, which a plugin cannot read, so this checks the shape
+ * the Host writes (`v1.<body>.<sig>` / `v2.<body>.<sig>`) under the `dsh-auth-` prefix. That is weaker
+ * than the Host's own check and is only the fallback for hosts that removed `requestRejection`; every
+ * route here also enforces its own origin decision, and none of them is reachable off loopback.
+ */
+export function browserCookiePresent(request: IncomingMessage): boolean {
+  const raw = request.headers.cookie
+  if (typeof raw !== 'string') return false
+  return raw.split(';').some(segment => {
+    const text = segment.trim()
+    if (!text.startsWith('dsh-auth-')) return false
+    const at = text.indexOf('=')
+    return at !== -1 && /^v[12]\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u.test(text.slice(at + 1).trim())
+  })
+}
+
 export function harnessHttpRejection(ctx: Context, request: IncomingMessage): HarnessHttpRejection | undefined {
   let connection: AdmissionSurface | undefined
   try {
@@ -69,10 +108,11 @@ export function harnessHttpRejection(ctx: Context, request: IncomingMessage): Ha
       // `undefined` means the request may proceed; an unusable answer must not be read as consent.
       return status === undefined ? undefined : refusal(status) ?? UNAVAILABLE
     }
-    const admission = connection.admit!({ headers: request.headers })
-    if (admission === undefined) return UNAVAILABLE
-    if (admission.peer !== undefined) return undefined
-    return refusal(admission.rejection) ?? UNAVAILABLE
+    // Only `admit` remains, so this is a DSH 0.2.2-rc.2-or-later host. `admit` resolves an *operator*
+    // Peer that a browser navigation never establishes and answers the legal `{ rejection: 503 }`
+    // when it cannot, so it cannot answer "may this request proceed". These routes are registered
+    // through `anonymousRoute` and authenticate the Host's own browser cookie instead.
+    return browserCookiePresent(request) ? undefined : { status: 401, error: 'DSH_BROWSER_AUTH_REQUIRED' }
   } catch {
     // A throwing verifier is a transient dependency failure, which stays closed but is not
     // mislabelled as a contract break.

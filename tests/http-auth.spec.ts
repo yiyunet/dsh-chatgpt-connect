@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { IncomingMessage } from 'node:http'
 import { describe, expect, it, vi } from 'vitest'
-import { harnessHttpRejection } from '../src/http-auth.ts'
+import { anonymousRoute, browserCookiePresent, harnessHttpRejection } from '../src/http-auth.ts'
 
 const request = { headers: { host: '127.0.0.1:3081' } } as IncomingMessage
 function context(get: (name: string) => unknown): Context {
@@ -69,45 +69,46 @@ describe('Harness admission for protected plugin HTTP routes', () => {
     expect(harnessHttpRejection(context(() => surface), request)).toBeUndefined()
     expect(surface.seen).toBe(request)
   })
-
-  it('calls admit() through its receiver so `this` survives', () => {
-    const surface = {
-      seen: undefined as unknown,
-      admit(this: { seen: unknown }, payload: { headers: unknown }) {
-        this.seen = payload
-        return { peer: {} }
-      },
-    }
-    expect(harnessHttpRejection(context(() => surface), request)).toBeUndefined()
-    expect(surface.seen).toEqual({ headers: request.headers })
-  })
 })
 
 /**
- * DSH `0.2.2-rc.2` replaced `requestRejection` with `admit`. Keeping only the old spelling is what
- * made DSH `0.2.2-rc.3` answer `503` on every protected route while every test stayed green: the
- * fixtures supplied the member the real host had already removed.
+ * DSH `0.2.2-rc.2` removed `requestRejection` and shipped `admit` instead, whose comment says it
+ * "passes `requestRejection` **and speaks for the operator Peer**". That extra step is the trap:
+ * a page navigation never establishes an operator, so `admit` answers the legal
+ * `{ rejection: 503 }` and every protected route reported "temporarily unavailable" — which the task
+ * control renders as *unconfirmed state* and therefore keeps offering recovery.
+ *
+ * Those hosts also default every WebServer route to `auth: 'required'`, so admission happens before
+ * the handler runs. The handler must not repeat it.
  */
-describe('admit() admission surface (DSH 0.2.2-rc.2 and later)', () => {
-  it('admits a request the Host granted a Peer for', () => {
-    const admit = vi.fn(() => ({ peer: { id: 'peer-fixture' } }))
-    expect(harnessHttpRejection(context(() => ({ admit })), request)).toBeUndefined()
-    expect(admit).toHaveBeenCalledExactlyOnceWith({ headers: request.headers })
+describe('admit-only admission surface (DSH 0.2.2-rc.2 and later)', () => {
+  const withCookie = (value: string): IncomingMessage =>
+    ({ headers: { host: '127.0.0.1:3081', cookie: `dsh-auth-fixture=${value}` } }) as unknown as IncomingMessage
+
+  it('authenticates the Host browser cookie instead of asking admit()', () => {
+    const admit = vi.fn(() => ({ rejection: 503 as const }))
+    expect(harnessHttpRejection(context(() => ({ admit })), withCookie('v2.cGF5bG9hZA.c2lnbmF0dXJl'))).toBeUndefined()
+    expect(admit).not.toHaveBeenCalled()
   })
 
-  it.each([
-    [401, 'DSH_BROWSER_AUTH_REQUIRED'],
-    [403, 'forbidden'],
-    [503, 'DSH_CONNECTION_UNAVAILABLE'],
-  ] as const)('preserves an admit() rejection %s', (status, error) => {
-    expect(harnessHttpRejection(context(() => ({ admit: () => ({ rejection: status }) })), request))
-      .toEqual({ status, error })
+  /**
+   * The regression: `required` routes refuse a browser fetch before the handler runs, and answering
+   * `503`/`401` there is indistinguishable from "unconfirmed state" in the client. Registering the
+   * route as `anonymous` is what lets this code run at all — so it must authenticate the cookie.
+   */
+  it('refuses a request that carries no Host browser cookie', () => {
+    expect(harnessHttpRejection(context(() => ({ admit: () => ({ peer: {} }) })), request))
+      .toEqual({ status: 401, error: 'DSH_BROWSER_AUTH_REQUIRED' })
+  })
+
+  it('refuses a dsh-auth cookie that is not the Host session shape', () => {
+    expect(harnessHttpRejection(context(() => ({ admit: () => ({ peer: {} }) })), withCookie('not-a-session')))
+      .toEqual({ status: 401, error: 'DSH_BROWSER_AUTH_REQUIRED' })
   })
 
   it('prefers requestRejection() when a host exposes both spellings', () => {
-    // `admit` is a strict superset: it also resolves an operator Peer and answers the legal
-    // `{ rejection: 503 }` when none is registered. These routes only ask whether a request may
-    // proceed, so the narrower member stays authoritative while it exists.
+    // A host that still has the narrower member keeps answering the only question these routes ask:
+    // may this request proceed. `admit` is not consulted, so no operator is required either.
     const admit = vi.fn(() => ({ peer: {} }))
     const requestRejection = vi.fn(() => undefined)
     expect(harnessHttpRejection(context(() => ({ admit, requestRejection })), request)).toBeUndefined()
@@ -115,14 +116,10 @@ describe('admit() admission surface (DSH 0.2.2-rc.2 and later)', () => {
     expect(admit).not.toHaveBeenCalled()
   })
 
-  it('treats a Peer-less, rejection-less admission as unavailable rather than admitting', () => {
-    expect(harnessHttpRejection(context(() => ({ admit: () => ({}) })), request))
-      .toEqual({ status: 503, error: 'DSH_CONNECTION_UNAVAILABLE' })
-  })
-
-  it('fails closed when admit() throws instead of admitting the request', () => {
-    const ctx = context(() => ({ admit() { throw new Error('fixture-private-cookie-must-not-leak') } }))
-    expect(harnessHttpRejection(ctx, request)).toEqual({ status: 503, error: 'DSH_CONNECTION_UNAVAILABLE' })
+  it('preserves requestRejection() refusals on a both-spellings host', () => {
+    const requestRejection = vi.fn((): 401 | 403 | undefined => 403)
+    expect(harnessHttpRejection(context(() => ({ admit: () => ({ peer: {} }), requestRejection })), request))
+      .toEqual({ status: 403, error: 'forbidden' })
   })
 
   /**
@@ -133,5 +130,33 @@ describe('admit() admission surface (DSH 0.2.2-rc.2 and later)', () => {
   it('raises a removed admission surface instead of reporting a transient outage', () => {
     expect(() => harnessHttpRejection(context(() => ({})), request))
       .toThrow(/neither requestRejection\(\) nor admit\(\)/u)
+  })
+})
+
+describe('route authentication policy', () => {
+  /**
+   * DSH 0.2.2-rc.2 defaults every WebServer route to `auth: 'required'`, which needs an admitted
+   * operator Peer that a browser fetch cannot present — the request is refused before the handler
+   * runs. These routes authenticate the browser themselves and must opt out.
+   */
+  it('marks routes anonymous so the Host does not demand an operator Peer', () => {
+    const route = anonymousRoute({ kind: 'exact' as const, path: '/plugins/dsh-codex-connect/task' })
+    expect((route as unknown as { auth?: string }).auth).toBe('anonymous')
+    expect((route as unknown as { path: string }).path).toBe('/plugins/dsh-codex-connect/task')
+  })
+
+  it.each([
+    ['v1.cGF5bG9hZA.c2lnbmF0dXJl', true],
+    ['v2.cGF5bG9hZA.c2lnbmF0dXJl', true],
+    ['not-a-session', false],
+    ['', false],
+  ] as const)('recognizes the Host session cookie shape %j as %s', (value, expected) => {
+    const request = { headers: { cookie: `dsh-auth-fixture=${value}` } } as unknown as IncomingMessage
+    expect(browserCookiePresent(request)).toBe(expected)
+  })
+
+  it('ignores cookies outside the dsh-auth prefix', () => {
+    const request = { headers: { cookie: 'other=v2.body.sig' } } as unknown as IncomingMessage
+    expect(browserCookiePresent(request)).toBe(false)
   })
 })

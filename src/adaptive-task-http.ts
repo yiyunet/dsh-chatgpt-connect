@@ -8,7 +8,7 @@ import { ADAPTIVE_TASK_PATH, decodeTaskCommand, validTaskSessionId } from './ada
 import { AdaptiveTaskError, taskFailure, taskIdentity } from './adaptive-task-store.ts'
 import type { AdaptiveTaskCommand, AdaptiveTaskState } from './adaptive-task-contract.ts'
 import { ADAPTIVE_TASK_RELEASE_PAUSED, publicTaskCommandAllowed, publicTaskState } from './adaptive-task-publication.ts'
-import { harnessHttpRejection } from './http-auth.ts'
+import { anonymousRoute, harnessHttpRejection } from './http-auth.ts'
 
 const BODY_LIMIT = 8192
 function reply(res: ServerResponse, status: number, value: unknown): void {
@@ -53,7 +53,7 @@ export function registerAdaptiveTaskHttp(ctx: Context, runtime: {
   state(sessionId: string, principal: string): Promise<AdaptiveTaskState>
   command(command: AdaptiveTaskCommand, principal: string): Promise<AdaptiveTaskState>
 }): void {
-  ctx.effect(() => ctx.webServer.register({ kind: 'exact', path: ADAPTIVE_TASK_PATH, async handler(req, res) {
+  ctx.effect(() => ctx.webServer.register(anonymousRoute({ kind: 'exact', path: ADAPTIVE_TASK_PATH, async handler(req: IncomingMessage, res: ServerResponse) {
     try {
       const rejected = harnessHttpRejection(ctx, req)
       if (rejected !== undefined) {
@@ -83,5 +83,5 @@ export function registerAdaptiveTaskHttp(ctx: Context, runtime: {
       if (code === 'TASK_HOST_UNSUPPORTED') { reply(res, 404, { error: code }); return }
       reply(res, code === 'TASK_OWNER_MISMATCH' || code === 'TASK_BROWSER_AUTH_REQUIRED' ? 403 : 409, { error: code })
     }
-  } }), 'dsh-codex-connect: task route')
+  } })), 'dsh-codex-connect: task route')
 }

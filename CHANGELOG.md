@@ -4,6 +4,28 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.5 — 2026-11-14
+
+The task route is reachable again on DSH `0.2.2-rc.3`: it opts out of the WebServer route policy and
+authenticates the Host's browser cookie itself.
+
+- **The `0.3.3`/`0.3.4` fixes never ran.** `0.3.3` made an incapable host answer `404` — which the
+  client treats as "no route" and stops rendering — and `0.3.4` changed which admission member the
+  handler asks. On a real `0.2.2-rc.3` host both produced *identical* behaviour, which is only
+  possible if the handler was never reached.
+- **Why it was not reached.** `0.2.2-rc.2` made every WebServer route default to `auth: 'required'`,
+  and `required` needs an admitted *operator* Peer that only a `/connect` API session establishes. A
+  browser fetch never has one, so the Host refuses it before the handler runs with a plain-text `401`;
+  the client's `response.json()` throws on that and surfaces as the same "state unconfirmed" control.
+- **This release: `auth: 'anonymous'` plus cookie authentication for the task route.**
+  `browserCookiePresent` checks the shape of the Host's own `dsh-auth-*` value (`v1.`/`v2.`);
+  signature verification needs a Host secret a plugin cannot read, so this is a shape check, guarded
+  by the existing loopback listener and the route's own origin decision.
+- **Scope is deliberately one route.** The other four protected families are unchanged so that this
+  direction is validated on the one route the user can see before it is applied twelve more times.
+- **Known gap:** `auth-routes`, `image-asset-routes`, `proxy-routes` and `update-routes` still inherit
+  `required` and remain unreachable on `0.2.2-rc.3` until they receive the same treatment.
+
 ## 0.3.4 — 2026-11-13
 
 Restores every protected HTTP route on DSH `0.2.2-rc.3`, where they had all been answering `503`.

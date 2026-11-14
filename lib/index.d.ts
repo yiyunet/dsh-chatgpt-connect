@@ -448,7 +448,7 @@ export declare const SUPPORTED_DSH_PLUGIN_API_VERSION = "0.1.7-rc.1";
  * 兼容别名，保留给仍按旧名导入的调用方。
  * @deprecated 语义已从「允许的版本」变为「已实测的版本」，新代码请用 VERIFIED_DSH_PLUGIN_API_VERSIONS。
  */
-export declare const SUPPORTED_DSH_PLUGIN_API_VERSIONS: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3", "0.2.2-rc.1", "0.2.2-rc.2"];
+export declare const SUPPORTED_DSH_PLUGIN_API_VERSIONS: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3", "0.2.2-rc.1", "0.2.2-rc.2", "0.2.2-rc.3"];
 export declare const SUPPORTED_PI_AI_RANGE = "0.85.1";
 export declare const PI_AI_PACKAGE = "@earendil-works/pi-ai";
 /**
@@ -505,7 +505,7 @@ export declare const COMPATIBILITY_CONTRACT: {
   };
   readonly dshPluginApi: {
     readonly version: "0.1.7-rc.1";
-    readonly versions: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3", "0.2.2-rc.1", "0.2.2-rc.2"];
+    readonly versions: readonly ["0.1.7-rc.1", "0.1.7-rc.2", "0.2.0-rc.1", "0.2.0-rc.2", "0.2.1-alpha.1", "0.2.1-alpha.2", "0.2.1-alpha.3", "0.2.1-alpha.4", "0.2.1-alpha.5", "0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-alpha.3", "0.2.2-rc.1", "0.2.2-rc.2", "0.2.2-rc.3"];
     readonly packages: readonly ["@deepseek-ai/dsh-attachment", "@deepseek-ai/dsh-compaction", "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-llm-pi-ai", "@deepseek-ai/dsh-session", "@deepseek-ai/dsh-tools", "@deepseek-ai/dsh-util-values", "@deepseek-ai/dsh-web"];
   };
   readonly piAi: {

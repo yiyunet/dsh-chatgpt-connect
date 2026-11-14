@@ -11,7 +11,7 @@ const PACKAGE_FILE = join(REPO_ROOT, 'package.json')
 const JSON_SCHEMA_VERSION = 1
 const REQUIRED_NODE_RANGE = '^22.19.0 || >=24.0.0'
 const REQUIRED_DSH_VERSION = '0.1.7-rc.1'
-const REQUIRED_DSH_VERSIONS = [REQUIRED_DSH_VERSION, '0.1.7-rc.2', '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', '0.2.1-alpha.2', '0.2.1-alpha.3', '0.2.1-alpha.4', '0.2.1-alpha.5', '0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-alpha.3', '0.2.2-rc.1', '0.2.2-rc.2']
+const REQUIRED_DSH_VERSIONS = [REQUIRED_DSH_VERSION, '0.1.7-rc.2', '0.2.0-rc.1', '0.2.0-rc.2', '0.2.1-alpha.1', '0.2.1-alpha.2', '0.2.1-alpha.3', '0.2.1-alpha.4', '0.2.1-alpha.5', '0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-alpha.3', '0.2.2-rc.1', '0.2.2-rc.2', '0.2.2-rc.3']
 const REQUIRED_DSH_RANGE = REQUIRED_DSH_VERSIONS.join(' || ')
 /** 双轨制：准入门改下有界区间（下界…0.3.0 开区间），新 Host 装得上；能否用由报告口径判定。 */
 const REQUIRED_DSH_PEER_RANGE = `>=${REQUIRED_DSH_VERSION} <0.3.0`

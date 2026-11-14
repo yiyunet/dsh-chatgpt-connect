@@ -43,6 +43,7 @@ export const VERIFIED_DSH_PLUGIN_API_VERSIONS = [
   '0.2.2-alpha.3',
   '0.2.2-rc.1',
   '0.2.2-rc.2',
+  '0.2.2-rc.3',
 ] as const
 
 /**

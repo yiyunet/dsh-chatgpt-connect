@@ -8,19 +8,74 @@ export interface HarnessHttpRejection {
   error: 'DSH_BROWSER_AUTH_REQUIRED' | 'forbidden' | 'DSH_CONNECTION_UNAVAILABLE'
 }
 
-/** Resolve the current Connection on each request; never retain a stale authentication service. */
+const UNAVAILABLE: HarnessHttpRejection = { status: 503, error: 'DSH_CONNECTION_UNAVAILABLE' }
+
+/** The two admission spellings DSH has shipped, probed at call time. */
+interface AdmissionSurface {
+  admit?: (request: { readonly headers: IncomingMessage['headers'] }) => {
+    readonly peer?: unknown
+    readonly rejection?: 401 | 403 | 503
+  } | undefined
+  requestRejection?: (request: IncomingMessage) => 401 | 403 | undefined
+}
+
+/** Map a known refusal; anything else is `undefined` so callers fail closed rather than open. */
+function refusal(status: 401 | 403 | 503 | undefined): HarnessHttpRejection | undefined {
+  if (status === 401) return { status: 401, error: 'DSH_BROWSER_AUTH_REQUIRED' }
+  if (status === 403) return { status: 403, error: 'forbidden' }
+  if (status === 503) return UNAVAILABLE
+  return undefined
+}
+
+/**
+ * Resolve the current Connection on each request; never retain a stale authentication service.
+ *
+ * Both members are invoked **through the Connection receiver**. They are prototype methods that read
+ * `this` (`Connection#requestRejection` is called as `this.requestRejection(...)` from
+ * `Connection#admit`), so detaching them into locals and calling the bare function throws — and the
+ * resulting `catch` reported that TypeError as `503`, which is exactly the shape that kept the frozen
+ * task layer's recovery control on screen. Object-literal fixtures cannot catch that mistake because
+ * they carry no `this`, which is why the unit tests stayed green while both real-Connection suites
+ * turned red.
+ *
+ * Order matters. `admit` is documented as "it passes `requestRejection` and speaks for the operator
+ * Peer", so it is a strict superset: it additionally resolves an operator and answers the legal
+ * `{ rejection: 503 }` when none is registered. These routes only ask whether a request may proceed,
+ * so `requestRejection` is authoritative while it exists.
+ *
+ * DSH `0.2.2-rc.2` removed `requestRejection` outright and documented `admit` as its replacement
+ * (`docs/upgrade-guide/v0.2.2-rc.2/connection-page-peer`), so `admit` is the forward path. Both
+ * spellings are probed because this package still declares hosts back to `0.1.7-rc.1`.
+ *
+ * A missing member is a contract break and is raised as one; only a *throwing* dependency stays
+ * reported as unavailable.
+ */
 export function harnessHttpRejection(ctx: Context, request: IncomingMessage): HarnessHttpRejection | undefined {
+  let connection: AdmissionSurface | undefined
   try {
-    const connection = ctx.get('connection')
-    if (connection !== undefined) {
-      const rejected = connection.requestRejection(request)
-      if (rejected === undefined) return undefined
-      if (rejected === 401 || rejected === 403) {
-        return { status: rejected, error: rejected === 401 ? 'DSH_BROWSER_AUTH_REQUIRED' : 'forbidden' }
-      }
-    }
+    connection = ctx.get('connection') as AdmissionSurface | undefined
   } catch {
-    // Inactive dependencies and authentication failures must not become an unauthenticated fallback.
+    // An inactive service must not become an unauthenticated fallback.
+    return UNAVAILABLE
   }
-  return { status: 503, error: 'DSH_CONNECTION_UNAVAILABLE' }
+  if (connection === undefined) return UNAVAILABLE
+  if (typeof connection.requestRejection !== 'function' && typeof connection.admit !== 'function') {
+    throw new Error('dsh-chatgpt-connect: Connection exposes neither requestRejection() nor admit(); '
+      + 'this host changed the HTTP admission surface this plugin was built against')
+  }
+  try {
+    if (typeof connection.requestRejection === 'function') {
+      const status = connection.requestRejection(request)
+      // `undefined` means the request may proceed; an unusable answer must not be read as consent.
+      return status === undefined ? undefined : refusal(status) ?? UNAVAILABLE
+    }
+    const admission = connection.admit!({ headers: request.headers })
+    if (admission === undefined) return UNAVAILABLE
+    if (admission.peer !== undefined) return undefined
+    return refusal(admission.rejection) ?? UNAVAILABLE
+  } catch {
+    // A throwing verifier is a transient dependency failure, which stays closed but is not
+    // mislabelled as a contract break.
+    return UNAVAILABLE
+  }
 }

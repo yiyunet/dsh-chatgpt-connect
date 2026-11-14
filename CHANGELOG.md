@@ -4,6 +4,29 @@ Only versions published from this fork are listed here. Upstream releases under 
 previous package name `dsh-codex-connect` are historical records and remain in
 [INSTALL.md](INSTALL.md) and `docs/release-notes/`; they are not this package.
 
+## 0.3.4 — 2026-11-13
+
+Restores every protected HTTP route on DSH `0.2.2-rc.3`, where they had all been answering `503`.
+
+- **Root cause.** `harnessHttpRejection` called `connection.requestRejection`, which DSH removed in
+  `0.2.2-rc.2`. The removed member threw, a blanket `catch` turned that into `503`, and *all five*
+  protected route families — task state, OAuth, image assets, proxy, update — reported "temporarily
+  unavailable" permanently. The task recovery control reappeared because the client reads `503` as
+  *unconfirmed state*, so the `404` fix from `0.3.3` never got a chance to run.
+- **`admit` is the documented replacement, and it is a superset.** `Connection.admit` is documented as
+  "it passes `requestRejection` and speaks for the operator Peer", so it additionally resolves an
+  operator and answers the legal `{ rejection: 503 }` when none is registered. `requestRejection` is
+  therefore tried first while it exists — a Connection without an operator must not become a wall of
+  `503` — and `admit` is the forward path once it disappears.
+- **Both members are called through the Connection receiver.** They are prototype methods that read
+  `this`; detaching one into a local throws, and that TypeError used to surface as the same `503`. Two
+  regression tests pin the binding, because object-literal fixtures cannot catch it.
+- **A removed admission surface is now raised, not disguised.** Only a *throwing* dependency is
+  reported as unavailable; a Connection exposing neither member is a contract break and is thrown as
+  one. An unusable return value is fail-closed rather than read as consent.
+- **DSH `0.2.2-rc.3` is declared and installed in CI**, and marked task-unavailable like `rc.1`/`rc.2`
+  because its `AgentRegistry` still exposes neither `roots` nor `isOwnedBy`.
+
 ## 0.3.3 — 2026-11-13
 
 A host without the task layer no longer leaves a dead recovery control on the composer.

@@ -16,6 +16,9 @@
 export const TASK_UNAVAILABLE_HOSTS = Object.freeze({
   '0.2.2-rc.1': 'AgentRegistry dropped the members the task layer calls',
   '0.2.2-rc.2': 'AgentRegistry dropped the members the task layer calls',
+  // rc.3 keeps `currentInitiator` but still exposes neither `roots` nor `isOwnedBy`, so the frozen
+  // task layer cannot enumerate roots or prove ownership here either.
+  '0.2.2-rc.3': 'AgentRegistry still lacks the members the task layer calls',
 })
 
 /**
